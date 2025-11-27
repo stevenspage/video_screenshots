@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频字幕播放器</title>
+    <!-- Video.js CSS -->
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧视频区域 -->
+        <div class="video-section">
+            <div class="video-wrapper">
+                <video id="videoPlayer" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto" data-setup='{}'>
+                    <p class="vjs-no-js">
+                        要查看此视频，请启用 JavaScript，并考虑升级到支持 HTML5 视频的浏览器
+                    </p>
+                </video>
+                <div id="videoPlaceholder" class="placeholder">
+                    <div class="placeholder-content">
+                        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        <p>点击此处选择视频文件</p>
+                        <small style="opacity: 0.6; margin-top: 8px; display: block;">或使用下方按钮选择</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <div class="file-controls">
+                    <div class="control-group">
+                        <label for="videoInput" class="file-label">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            选择视频
+                        </label>
+                        <input type="file" id="videoInput" accept="video/*,.mkv" />
+                        <span id="videoFileName" class="file-name">未选择文件</span>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="subtitleInput" class="file-label">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            选择字幕
+                        </label>
+                        <input type="file" id="subtitleInput" accept=".srt" />
+                        <span id="subtitleFileName" class="file-name">未选择文件</span>
+                    </div>
+                </div>
+                
+                <div id="subtitleStatus" class="subtitle-status"></div>
+            </div>
+        </div>
+        
+        <!-- 右侧字幕区域 -->
+        <div class="subtitle-section">
+            <div class="subtitle-header">
+                <h2>字幕列表</h2>
+                <div id="subtitleCount" class="subtitle-count">0 条字幕</div>
+            </div>
+            <div class="subtitle-search">
+                <div class="search-input-wrapper">
+                    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <input type="text" id="subtitleSearchInput" placeholder="搜索字幕内容..." />
+                    <button id="clearSearch" class="clear-search" style="display: none;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div id="searchResults" class="search-results"></div>
+            </div>
+            <div id="subtitleList" class="subtitle-list">
+                <div class="subtitle-empty">
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                    <p>暂无字幕</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Video.js JavaScript -->
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
+
