@@ -144,24 +144,7 @@ npx http-server
 | AVI | 各种 | ⚠️ 兼容性差 | 转换为 MP4 |
 | MOV | ALAC | ⚠️ 部分不支持 | 转换音频为 AAC |
 
-### 快速转换命令
 
-```bash
-# 保持视频质量，只转换音频（最快）
-ffmpeg -i input.mkv -c:v copy -c:a aac -b:a 192k output.mp4
-
-# 完整转换（兼容性最好）
-ffmpeg -i input.mkv -c:v libx264 -crf 23 -c:a aac -b:a 192k output.mp4
-```
-
-详细教程：[视频格式转换指南](VIDEO_CONVERSION_GUIDE.md)
-
-## 🌐 浏览器兼容性
-
-- Chrome 90+
-- Firefox 88+
-- Safari 14+
-- Edge 90+
 
 ## 📝 注意事项
 

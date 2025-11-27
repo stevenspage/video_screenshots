@@ -4,13 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>视频字幕播放器</title>
-    <!-- Video.js CSS -->
     <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <!-- 左侧视频区域 -->
         <div class="video-section">
             <div class="video-wrapper">
                 <video id="videoPlayer" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto" data-setup='{}'>
@@ -64,11 +62,27 @@
             </div>
         </div>
         
-        <!-- 右侧字幕区域 -->
         <div class="subtitle-section">
             <div class="subtitle-header">
                 <h2>字幕列表</h2>
                 <div id="subtitleCount" class="subtitle-count">0 条字幕</div>
+            </div>
+            <div class="subtitle-toolbar">
+                <div class="toolbar-left">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="selectAllSubtitles" />
+                        <span>全选（支持SHIFT键）</span>
+                    </label>
+                    <span id="selectedCount" class="selected-count">已选 0 条</span>
+                </div>
+                <button id="generateScreenshots" class="toolbar-btn" disabled>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    生成截图
+                </button>
             </div>
             <div class="subtitle-search">
                 <div class="search-input-wrapper">
@@ -100,9 +114,101 @@
         </div>
     </div>
     
-    <!-- Video.js JavaScript -->
+    <div id="screenshotEditor" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>编辑截图</h2>
+                <button id="closeEditor" class="close-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="screenshot-list-panel">
+                    <div class="panel-header">
+                        <h3>截图列表 (<span id="screenshotListCount">0</span>)</h3>
+                        <small id="cropTip" class="tip-text">💡 调整第1张图片的裁剪会应用到其余截图（第1张保持完整）</small>
+                    </div>
+                    <div id="screenshotItemsList" class="screenshot-items">
+                    </div>
+                </div>
+                
+                <div class="screenshot-editor-panel">
+                    <div class="editor-canvas-wrapper">
+                        <canvas id="editorCanvas"></canvas>
+                        <div id="cropOverlay" class="crop-overlay">
+                            <div class="crop-box">
+                                <div class="crop-handle handle-nw"></div>
+                                <div class="crop-handle handle-ne"></div>
+                                <div class="crop-handle handle-sw"></div>
+                                <div class="crop-handle handle-se"></div>
+                                <div class="crop-handle handle-n"></div>
+                                <div class="crop-handle handle-s"></div>
+                                <div class="crop-handle handle-w"></div>
+                                <div class="crop-handle handle-e"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="editor-toolbar">
+                        <button id="resetCrop" class="btn-small">重置裁剪</button>
+                    </div>
+                </div>
+                
+                <div class="stitch-settings-panel">
+                    <h3>拼接设置</h3>
+                    
+                    <div class="setting-group">
+                        <label>拼接模式</label>
+                        <select id="stitchMode">
+                            <option value="dialogue">连续台词</option>
+                            <option value="scene">连续画面</option>
+                        </select>
+                        <small id="modeTip" class="mode-tip">第1张完整画面，其余截图使用裁剪</small>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label>图片间距 (<span id="spacingValue">10</span>px)</label>
+                        <input type="range" id="stitchSpacing" min="0" max="50" value="10" />
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label>边距 (<span id="paddingValue">10</span>px)</label>
+                        <input type="range" id="stitchPadding" min="0" max="50" value="10" />
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label>背景颜色</label>
+                        <div class="color-options">
+                            <button class="color-btn active" data-color="#ffffff" style="background: #ffffff;"></button>
+                            <button class="color-btn" data-color="#000000" style="background: #000000;"></button>
+                            <button class="color-btn" data-color="#f0f0f0" style="background: #f0f0f0;"></button>
+                            <button class="color-btn" data-color="#667eea" style="background: #667eea;"></button>
+                        </div>
+                    </div>
+                    
+                    <div class="preview-section">
+                        <div class="preview-buttons">
+                            <button id="previewStitch" class="btn-primary">预览拼接</button>
+                            <button id="downloadStitched" class="btn-download" disabled>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                下载拼接图
+                            </button>
+                        </div>
+                        <div id="previewContainer" class="preview-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
-
