@@ -344,14 +344,14 @@ function displaySubtitles() {
 function updateCurrentSubtitle(currentTime) {
     
     let newIndex = -1;
-    for (let i = subtitles.length - 1; i >= 0; i--) {
-        if (currentTime >= subtitles[i].startTime) {
+    for (let i = 0; i < subtitles.length; i++) {
+        if (currentTime >= subtitles[i].startTime && currentTime <= subtitles[i].endTime) {
             newIndex = i;
             break;
         }
     }
     
-    if (newIndex !== currentSubtitleIndex) {
+    if (newIndex !== -1 && newIndex !== currentSubtitleIndex) {
         currentSubtitleIndex = newIndex;
         updateSubtitleHighlight();
     }
