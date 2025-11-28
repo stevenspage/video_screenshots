@@ -498,6 +498,7 @@ input[type="file"] {
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s;
+    white-space: nowrap;
 }
 
 .toolbar-btn:hover:not(:disabled) {
@@ -521,6 +522,7 @@ input[type="file"] {
     font-weight: 400;
     padding: 6px 12px;
     font-size: 13px;
+    white-space: nowrap;
 }
 
 .toolbar-btn-subtle:hover:not(:disabled) {
@@ -1397,5 +1399,27 @@ input[type="file"] {
     
     .subtitle-toolbar {
         padding: 8px 12px;
+    }
+    
+    .toolbar-btn {
+        font-size: 13px;
+        padding: 6px 12px;
+    }
+    
+    .toolbar-btn-subtle {
+        font-size: 13px;
+        padding: 6px 10px;
+    }
+    
+    .toolbar-right {
+        gap: 8px;
+    }
+    
+    .checkbox-label {
+        font-size: 13px;
+    }
+    
+    .selected-count {
+        font-size: 13px;
     }
 }
