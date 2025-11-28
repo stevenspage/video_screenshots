@@ -903,6 +903,16 @@ function loadScreenshotList() {
         const controls = document.createElement('div');
         controls.className = 'screenshot-item-controls';
         
+        const downloadBtn = document.createElement('button');
+        downloadBtn.className = 'screenshot-control-btn download-btn';
+        downloadBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>';
+        downloadBtn.title = '下载此截图';
+        downloadBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            downloadSingleScreenshot(index);
+        });
+        controls.appendChild(downloadBtn);
+        
         const replaceBtn = document.createElement('button');
         replaceBtn.className = 'screenshot-control-btn replace-btn';
         replaceBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>';
@@ -1013,6 +1023,88 @@ function replaceScreenshot(index) {
     
     fileInput.click();
 }
+
+function downloadSingleScreenshot(index) {
+    const screenshot = editorScreenshots[index];
+    const crop = cropData[index];
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = crop.width;
+    canvas.height = crop.height;
+    const ctx = canvas.getContext('2d');
+    
+    const img = new Image();
+    img.onload = function() {
+        ctx.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
+        
+        const imageData = canvas.toDataURL('image/png');
+        const filename = `${index + 1}.png`;
+        downloadImage(imageData, filename);
+        
+        showStatus(`截图 ${index + 1} 下载成功`, 'success');
+    };
+    img.src = screenshot.data;
+}
+
+async function downloadAllScreenshots() {
+    if (typeof JSZip === 'undefined') {
+        alert('JSZip 库未加载，无法下载压缩包');
+        return;
+    }
+    
+    const btn = document.getElementById('downloadAllScreenshots');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10"></circle></svg> 生成中...';
+    
+    try {
+        const zip = new JSZip();
+        
+        const promises = editorScreenshots.map((screenshot, index) => {
+            return new Promise((resolve) => {
+                const crop = cropData[index];
+                const canvas = document.createElement('canvas');
+                canvas.width = crop.width;
+                canvas.height = crop.height;
+                const ctx = canvas.getContext('2d');
+                
+                const img = new Image();
+                img.onload = function() {
+                    ctx.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
+                    
+                    canvas.toBlob((blob) => {
+                        zip.file(`${index + 1}.png`, blob);
+                        resolve();
+                    }, 'image/png');
+                };
+                img.src = screenshot.data;
+            });
+        });
+        
+        await Promise.all(promises);
+        
+        const content = await zip.generateAsync({type: 'blob'});
+        
+        const url = URL.createObjectURL(content);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `screenshots_${Date.now()}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        showStatus(`成功下载 ${editorScreenshots.length} 张截图`, 'success');
+    } catch (error) {
+        console.error('下载失败:', error);
+        alert('下载失败: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+document.getElementById('downloadAllScreenshots').addEventListener('click', downloadAllScreenshots);
 
 function deleteScreenshot(index) {
     if (editorScreenshots.length <= 1) {
@@ -1293,6 +1385,7 @@ function updateModeTip() {
     const paddingInput = document.getElementById('stitchPadding');
     const spacingValue = document.getElementById('spacingValue');
     const paddingValue = document.getElementById('paddingValue');
+    const advancedSettings = document.querySelectorAll('.setting-group-advanced');
     
     if (currentStitchMode === 'scene') {
         modeTip.textContent = '所有截图使用相同裁剪';
@@ -1300,12 +1393,16 @@ function updateModeTip() {
         
         if (spacingInput.value === '0') spacingInput.value = '10';
         if (paddingInput.value === '0') paddingInput.value = '10';
+        
+        advancedSettings.forEach(el => el.classList.remove('hidden'));
     } else {
         modeTip.textContent = '第1张完整画面，其余截图使用裁剪';
         cropTip.textContent = '💡 调整第1张图片的裁剪会应用到其余截图（第1张保持完整）';
         
         spacingInput.value = '0';
         paddingInput.value = '0';
+        
+        advancedSettings.forEach(el => el.classList.add('hidden'));
     }
     
     spacingValue.textContent = spacingInput.value;

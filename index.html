@@ -135,6 +135,16 @@
                     </div>
                     <div id="screenshotItemsList" class="screenshot-items">
                     </div>
+                    <div class="panel-footer">
+                        <button id="downloadAllScreenshots" class="btn-download-all" title="下载全部截图">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            下载全部
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="screenshot-editor-panel">
@@ -170,17 +180,17 @@
                         <small id="modeTip" class="mode-tip">第1张完整画面，其余截图使用裁剪</small>
                     </div>
                     
-                    <div class="setting-group">
+                    <div class="setting-group setting-group-advanced">
                         <label>图片间距 (<span id="spacingValue">10</span>px)</label>
                         <input type="range" id="stitchSpacing" min="0" max="50" value="10" />
                     </div>
                     
-                    <div class="setting-group">
+                    <div class="setting-group setting-group-advanced">
                         <label>边距 (<span id="paddingValue">10</span>px)</label>
                         <input type="range" id="stitchPadding" min="0" max="50" value="10" />
                     </div>
                     
-                    <div class="setting-group">
+                    <div class="setting-group setting-group-advanced">
                         <label>背景颜色</label>
                         <div class="color-options">
                             <button class="color-btn active" data-color="#ffffff" style="background: #ffffff;"></button>
@@ -210,6 +220,7 @@
     </div>
     
     <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
