@@ -22,9 +22,20 @@
                         <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polygon points="5 3 19 12 5 21 5 3"></polygon>
                         </svg>
-                        <p>点击此处选择视频文件（不支持 MKV 格式）</p>
+                        <p>点击此处选择视频文件（MKV文件可能无声音，建议转成MP4格式）</p>
                         <small style="opacity: 0.6; margin-top: 8px; display: block;">或使用下方按钮选择</small>
                     </div>
+                </div>
+                <div id="mkvWarningBanner" class="mkv-warning-banner">
+                    <div class="warning-content">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        <span>MKV视频可能没有声音（音频编码不兼容），建议转成MP4格式</span>
+                    </div>
+                    <button id="closeMkvWarning" class="close-warning">×</button>
                 </div>
             </div>
             

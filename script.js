@@ -82,6 +82,7 @@ function loadVideo(file) {
     }
     
     const url = URL.createObjectURL(file);
+    const isMKV = file.name.toLowerCase().endsWith('.mkv');
     
     player.src({
         type: getMimeType(file),
@@ -90,6 +91,13 @@ function loadVideo(file) {
     
     videoPlaceholder.classList.add('hidden');
     
+    const mkvWarningBanner = document.getElementById('mkvWarningBanner');
+    if (isMKV) {
+        mkvWarningBanner.classList.add('show');
+    } else {
+        mkvWarningBanner.classList.remove('show');
+    }
+    
     player.one('error', function() {
         const error = player.error();
         console.error('视频加载错误:', error);
@@ -97,17 +105,12 @@ function loadVideo(file) {
         let errorMessage = '视频加载失败：';
         
         if (error && error.code === 4) {
-            
             errorMessage += '该视频格式不被支持。\n\n';
             
-            if (file.name.toLowerCase().endsWith('.mkv')) {
-                errorMessage += '可能原因：\n';
-                errorMessage += '• MKV 文件的音频编码不被浏览器支持（如 AC3、DTS）\n';
-                errorMessage += '• 视频编码格式浏览器不支持\n\n';
-                errorMessage += '解决方案：\n';
-                errorMessage += '1. 使用 FFmpeg 转换音频为 AAC：\n';
-                errorMessage += '   ffmpeg -i input.mkv -c:v copy -c:a aac output.mp4\n\n';
-                errorMessage += '2. 或使用格式工厂等软件转换为 MP4 格式';
+            if (isMKV) {
+                errorMessage += '即使以 MP4 模式加载，此 MKV 文件的视频编码也不被浏览器支持。\n\n';
+                errorMessage += '建议使用 FFmpeg 转换：\n';
+                errorMessage += 'ffmpeg -i input.mkv -c:v libx264 -c:a aac output.mp4';
             } else {
                 errorMessage += '请尝试使用 MP4 格式的视频文件，或使用视频转换工具转换格式。';
             }
@@ -134,7 +137,7 @@ function getMimeType(file) {
     if (fileName.endsWith('.mp4')) return 'video/mp4';
     if (fileName.endsWith('.webm')) return 'video/webm';
     if (fileName.endsWith('.ogg')) return 'video/ogg';
-    if (fileName.endsWith('.mkv')) return 'video/x-matroska';
+    if (fileName.endsWith('.mkv')) return 'video/mp4';
     if (fileName.endsWith('.avi')) return 'video/x-msvideo';
     if (fileName.endsWith('.mov')) return 'video/quicktime';
     return file.type || 'video/mp4';
@@ -484,6 +487,10 @@ document.addEventListener('keydown', function(e) {
 
 videoPlaceholder.addEventListener('click', function() {
     videoInput.click();
+});
+
+document.getElementById('closeMkvWarning').addEventListener('click', function() {
+    document.getElementById('mkvWarningBanner').classList.remove('show');
 });
 
 selectAllCheckbox.addEventListener('change', function() {
