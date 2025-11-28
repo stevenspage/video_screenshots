@@ -1260,17 +1260,21 @@ input[type="file"] {
 }
 
 @media (max-width: 1024px) {
+    body {
+        padding: 10px;
+    }
+    
     .container {
         flex-direction: column;
-        height: auto;
-        min-height: calc(100vh - 40px);
+        min-height: calc(100vh - 20px);
+        gap: 10px;
     }
     
     .subtitle-section {
         width: 100%;
         min-height: 0;
-        height: 55vh;
-        max-height: 55vh;
+        flex: 1;
+        max-height: 50vh;
     }
     
     .video-wrapper {
@@ -1278,6 +1282,11 @@ input[type="file"] {
         width: 100%;
         min-height: auto;
         aspect-ratio: 16 / 9;
+    }
+    
+    .video-section {
+        flex: none;
+        gap: 10px;
     }
 
     .subtitle-list {
