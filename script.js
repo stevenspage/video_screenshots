@@ -414,9 +414,16 @@ function updateSubtitleHighlight() {
             const itemRect = item.getBoundingClientRect();
             
             if (itemRect.top < listRect.top || itemRect.bottom > listRect.bottom) {
-                item.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center'
+                const listScrollTop = subtitleList.scrollTop;
+                const listHeight = subtitleList.clientHeight;
+                const itemOffsetTop = item.offsetTop;
+                const itemHeight = item.offsetHeight;
+                
+                const targetScrollTop = itemOffsetTop - (listHeight / 2) + (itemHeight / 2);
+                
+                subtitleList.scrollTo({
+                    top: targetScrollTop,
+                    behavior: 'smooth'
                 });
             }
         } else {
