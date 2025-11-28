@@ -35,6 +35,13 @@ venv/
 *.webm
 *.srt
 !example.srt
+!playback_demo/
+!playback_demo/*.mp4
+!playback_demo/*.mkv
+!playback_demo/*.avi
+!playback_demo/*.mov
+!playback_demo/*.webm
+!playback_demo/*.srt
 
 # 其他
 .env
