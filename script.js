@@ -13,6 +13,9 @@ const searchResults = document.getElementById('searchResults');
 const subtitleSearch = document.querySelector('.subtitle-search');
 const selectAllCheckbox = document.getElementById('selectAllSubtitles');
 const generateScreenshotsBtn = document.getElementById('generateScreenshots');
+const repeatPlayBtn = document.getElementById('repeatPlay');
+const repeatPlayText = document.getElementById('repeatPlayText');
+const repeatPlayIcon = document.getElementById('repeatPlayIcon');
 const selectedCountSpan = document.getElementById('selectedCount');
 const subtitleToolbar = document.querySelector('.subtitle-toolbar');
 
@@ -21,6 +24,9 @@ let currentSubtitleIndex = -1;
 let videoFile = null;
 let player = null;
 let lastCheckedIndex = -1; 
+let isRepeating = false;
+let repeatInterval = null;
+let repeatTimeUpdateHandler = null;
 
 function initVideoPlayer() {
     player = videojs('videoPlayer', {
@@ -51,14 +57,6 @@ function initVideoPlayer() {
     return player;
 }
 
-if (typeof videojs !== 'undefined') {
-    initVideoPlayer();
-} else {
-    document.addEventListener('DOMContentLoaded', function() {
-        initVideoPlayer();
-    });
-}
-
 videoInput.addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (file) {
@@ -79,6 +77,10 @@ subtitleInput.addEventListener('change', function(e) {
 function loadVideo(file) {
     if (!player) {
         initVideoPlayer();
+    }
+    
+    if (isRepeating) {
+        stopRepeatPlay();
     }
     
     const url = URL.createObjectURL(file);
@@ -532,15 +534,183 @@ function updateSelectedCount() {
         selectAllCheckbox.checked = false;
         selectAllCheckbox.indeterminate = false;
         generateScreenshotsBtn.disabled = true;
+        if (isRepeating) {
+            repeatPlayBtn.disabled = false;
+        } else {
+            repeatPlayBtn.disabled = true;
+        }
     } else if (checkedCount === checkboxes.length) {
         selectAllCheckbox.checked = true;
         selectAllCheckbox.indeterminate = false;
         generateScreenshotsBtn.disabled = false;
+        repeatPlayBtn.disabled = false;
     } else {
         selectAllCheckbox.checked = false;
         selectAllCheckbox.indeterminate = true;
         generateScreenshotsBtn.disabled = false;
+        repeatPlayBtn.disabled = false;
     }
+}
+
+repeatPlayBtn.addEventListener('click', function() {
+    if (!player) {
+        alert('请先加载视频');
+        return;
+    }
+    
+    if (isRepeating) {
+        stopRepeatPlay();
+    } else {
+        startRepeatPlay();
+    }
+});
+
+function isConsecutive(indices) {
+    if (indices.length <= 1) return true;
+    
+    for (let i = 1; i < indices.length; i++) {
+        if (indices[i] !== indices[i - 1] + 1) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function updateRepeatPlayIcon(isPlaying) {
+    if (isPlaying) {
+        repeatPlayIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';
+    } else {
+        repeatPlayIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+    }
+}
+
+function startRepeatPlay() {
+    const checkboxes = document.querySelectorAll('.subtitle-item-checkbox:checked');
+    if (checkboxes.length === 0) {
+        return;
+    }
+    
+    const selectedIndices = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
+    selectedIndices.sort((a, b) => a - b);
+    
+    if (selectedIndices.length === 0) {
+        return;
+    }
+    
+    isRepeating = true;
+    repeatPlayBtn.disabled = false;
+    repeatPlayText.textContent = '停止循环';
+    updateRepeatPlayIcon(true);
+    
+    const isConsecutiveSelection = isConsecutive(selectedIndices);
+    
+    if (isConsecutiveSelection && selectedIndices.length > 1) {
+        const firstSubtitle = subtitles[selectedIndices[0]];
+        const lastSubtitle = subtitles[selectedIndices[selectedIndices.length - 1]];
+        
+        if (firstSubtitle && lastSubtitle) {
+            const startTime = firstSubtitle.startTime;
+            const endTime = lastSubtitle.endTime;
+            
+            function playContinuous() {
+                if (!isRepeating) {
+                    if (repeatTimeUpdateHandler) {
+                        player.off('timeupdate', repeatTimeUpdateHandler);
+                        repeatTimeUpdateHandler = null;
+                    }
+                    return;
+                }
+                
+                player.currentTime(startTime);
+                player.play();
+                
+                if (repeatTimeUpdateHandler) {
+                    player.off('timeupdate', repeatTimeUpdateHandler);
+                }
+                
+                repeatTimeUpdateHandler = function() {
+                    if (!isRepeating) return;
+                    
+                    const currentTime = player.currentTime();
+                    if (currentTime >= endTime) {
+                        player.off('timeupdate', repeatTimeUpdateHandler);
+                        repeatTimeUpdateHandler = null;
+                        
+                        if (isRepeating) {
+                            playContinuous();
+                        }
+                    }
+                };
+                
+                player.on('timeupdate', repeatTimeUpdateHandler);
+            }
+            
+            playContinuous();
+            return;
+        }
+    }
+    
+    let currentIndex = 0;
+    
+    function playNext() {
+        if (!isRepeating) {
+            if (repeatTimeUpdateHandler) {
+                player.off('timeupdate', repeatTimeUpdateHandler);
+                repeatTimeUpdateHandler = null;
+            }
+            return;
+        }
+        
+        const subtitle = subtitles[selectedIndices[currentIndex]];
+        if (!subtitle) {
+            currentIndex = 0;
+            playNext();
+            return;
+        }
+        
+        player.currentTime(subtitle.startTime);
+        player.play();
+        
+        if (repeatTimeUpdateHandler) {
+            player.off('timeupdate', repeatTimeUpdateHandler);
+        }
+        
+        repeatTimeUpdateHandler = function() {
+            if (!isRepeating) return;
+            
+            const currentTime = player.currentTime();
+            if (currentTime >= subtitle.endTime) {
+                player.off('timeupdate', repeatTimeUpdateHandler);
+                repeatTimeUpdateHandler = null;
+                
+                if (isRepeating) {
+                    currentIndex = (currentIndex + 1) % selectedIndices.length;
+                    playNext();
+                }
+            }
+        };
+        
+        player.on('timeupdate', repeatTimeUpdateHandler);
+    }
+    
+    playNext();
+}
+
+function stopRepeatPlay() {
+    isRepeating = false;
+    if (repeatInterval) {
+        clearTimeout(repeatInterval);
+        repeatInterval = null;
+    }
+    if (player && repeatTimeUpdateHandler) {
+        player.off('timeupdate', repeatTimeUpdateHandler);
+        repeatTimeUpdateHandler = null;
+    }
+    if (player) {
+        player.pause();
+    }
+    repeatPlayText.textContent = '重复播放';
+    updateRepeatPlayIcon(false);
 }
 
 generateScreenshotsBtn.addEventListener('click', async function() {
@@ -1517,6 +1687,52 @@ async function generateStitchedImage() {
     }
     
     return finalCanvas.toDataURL('image/png');
+}
+
+async function loadDemoFiles() {
+    const demoVideoPath = 'playback_demo/House-of-Cards-Series-Trailer_with_subtitles.mp4';
+    const demoSubtitlePath = 'playback_demo/House-of-Cards-Series-Trailer.srt';
+    
+    try {
+        const videoResponse = await fetch(demoVideoPath, { method: 'HEAD' });
+        if (!videoResponse.ok) {
+            return;
+        }
+        
+        const subtitleResponse = await fetch(demoSubtitlePath, { method: 'HEAD' });
+        if (!subtitleResponse.ok) {
+            return;
+        }
+        
+        if (!player) {
+            initVideoPlayer();
+        }
+        
+        player.src({
+            type: 'video/mp4',
+            src: demoVideoPath
+        });
+        
+        videoPlaceholder.classList.add('hidden');
+        videoFileName.textContent = 'House-of-Cards-Series-Trailer_with_subtitles.mp4';
+        
+        const subtitleBlob = await fetch(demoSubtitlePath).then(r => r.blob());
+        const subtitleFile = new File([subtitleBlob], 'House-of-Cards-Series-Trailer.srt', { type: 'text/plain' });
+        
+        loadSubtitle(subtitleFile);
+        subtitleFileName.textContent = subtitleFile.name;
+    } catch (error) {
+    }
+}
+
+if (typeof videojs !== 'undefined') {
+    initVideoPlayer();
+    setTimeout(loadDemoFiles, 300);
+} else {
+    document.addEventListener('DOMContentLoaded', function() {
+        initVideoPlayer();
+        setTimeout(loadDemoFiles, 300);
+    });
 }
 
 console.log('视频字幕播放器已就绪');
