@@ -54,6 +54,20 @@ function initVideoPlayer() {
         updateCurrentSubtitle(currentTime);
     });
 
+    player.on('play', function() {
+        const overlay = document.getElementById('manualScreenshotOverlay');
+        if (overlay) {
+            overlay.classList.remove('show');
+        }
+    });
+
+    player.on('pause', function() {
+        const overlay = document.getElementById('manualScreenshotOverlay');
+        if (overlay && player && player.readyState() >= 2) {
+            overlay.classList.add('show');
+        }
+    });
+
     return player;
 }
 
@@ -81,6 +95,16 @@ function loadVideo(file) {
     
     if (isRepeating) {
         stopRepeatPlay();
+    }
+    
+    manualScreenshots = [];
+    const countElement = document.getElementById('manualScreenshotCount');
+    if (countElement) {
+        countElement.textContent = '0';
+    }
+    const editorBtn = document.getElementById('openManualEditorBtn');
+    if (editorBtn) {
+        editorBtn.disabled = true;
     }
     
     const url = URL.createObjectURL(file);
@@ -127,6 +151,13 @@ function loadVideo(file) {
     player.one('loadeddata', function() {
         console.log('视频加载完成:', file.name);
         showStatus(`视频加载成功：${file.name}`, 'success');
+        
+        if (player.paused()) {
+            const overlay = document.getElementById('manualScreenshotOverlay');
+            if (overlay && player.readyState() >= 2) {
+                overlay.classList.add('show');
+            }
+        }
     });
     
     player.ready(function() {
@@ -892,6 +923,65 @@ function seekToTime(time) {
     });
 }
 
+function captureManualScreenshot() {
+    if (!player) return;
+    
+    const video = player.el().querySelector('video');
+    if (!video || video.readyState < 2) return;
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    const imageData = canvas.toDataURL('image/png');
+    const currentTime = player.currentTime();
+    
+    const screenshot = {
+        index: manualScreenshots.length,
+        data: imageData,
+        subtitle: {
+            startTime: currentTime,
+            endTime: currentTime,
+            text: `手动截图 ${manualScreenshots.length + 1}`,
+            index: manualScreenshots.length + 1
+        },
+        width: canvas.width,
+        height: canvas.height
+    };
+    
+    manualScreenshots.push(screenshot);
+    
+    const countElement = document.getElementById('manualScreenshotCount');
+    if (countElement) {
+        countElement.textContent = manualScreenshots.length;
+    }
+    
+    const editorBtn = document.getElementById('openManualEditorBtn');
+    if (editorBtn) {
+        editorBtn.disabled = manualScreenshots.length === 0;
+    }
+    
+    showStatus(`已截取 ${manualScreenshots.length} 张截图`, 'success');
+}
+
+const captureScreenshotBtn = document.getElementById('captureScreenshotBtn');
+const openManualEditorBtn = document.getElementById('openManualEditorBtn');
+
+if (captureScreenshotBtn) {
+    captureScreenshotBtn.addEventListener('click', function() {
+        captureManualScreenshot();
+    });
+}
+
+if (openManualEditorBtn) {
+    openManualEditorBtn.addEventListener('click', function() {
+        if (manualScreenshots.length === 0) return;
+        openScreenshotEditor(manualScreenshots);
+    });
+}
+
 function drawSubtitleOnCanvas(ctx, canvas, subtitle) {
     const padding = 20;
     const fontSize = Math.max(24, canvas.width / 40);
@@ -967,7 +1057,8 @@ let editorScreenshots = [];
 let currentEditingIndex = 0;
 let cropData = {}; 
 let stitchedImageData = null;
-let currentStitchMode = 'dialogue'; 
+let currentStitchMode = 'dialogue';
+let manualScreenshots = []; 
 
 const modal = document.getElementById('screenshotEditor');
 const closeEditorBtn = document.getElementById('closeEditor');
@@ -1716,6 +1807,15 @@ async function loadDemoFiles() {
         videoPlaceholder.classList.add('hidden');
         videoFileName.textContent = 'House-of-Cards-Series-Trailer_with_subtitles.mp4';
         
+        player.one('loadeddata', function() {
+            if (player.paused()) {
+                const overlay = document.getElementById('manualScreenshotOverlay');
+                if (overlay && player.readyState() >= 2) {
+                    overlay.classList.add('show');
+                }
+            }
+        });
+        
         const subtitleBlob = await fetch(demoSubtitlePath).then(r => r.blob());
         const subtitleFile = new File([subtitleBlob], 'House-of-Cards-Series-Trailer.srt', { type: 'text/plain' });
         
@@ -1740,3 +1840,4 @@ console.log('支持的快捷键：');
 console.log('  空格：播放/暂停');
 console.log('  ←/→：后退/前进 5 秒');
 console.log('  ↑/↓：跳转到上一条/下一条字幕');
+

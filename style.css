@@ -172,6 +172,101 @@ body {
     transform: scale(0.95);
 }
 
+.manual-screenshot-overlay {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    display: none;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    z-index: 50;
+    pointer-events: none;
+}
+
+.manual-screenshot-overlay.show {
+    display: flex;
+}
+
+.capture-screenshot-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 4px;
+    background: transparent;
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    color: #666;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none;
+    transition: all 0.2s;
+    pointer-events: auto;
+}
+
+.capture-screenshot-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.capture-screenshot-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(102, 126, 234, 0.5);
+    color: #667eea;
+}
+
+.capture-screenshot-btn:active {
+    transform: scale(0.92);
+}
+
+.manual-screenshot-info {
+    background: rgba(0, 0, 0, 0.6);
+    color: rgba(255, 255, 255, 0.9);
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 400;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.open-editor-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    background: white;
+    color: #666;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.2s;
+    pointer-events: auto;
+    box-shadow: none;
+    white-space: nowrap;
+}
+
+.open-editor-btn:hover:not(:disabled) {
+    background: rgba(102, 126, 234, 0.8);
+    border-color: rgba(102, 126, 234, 0.5);
+    color: rgba(255, 255, 255, 0.9);
+    box-shadow: none;
+    transform: none;
+}
+
+.open-editor-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.open-editor-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
 .placeholder-content {
     text-align: center;
     transition: transform 0.3s;
