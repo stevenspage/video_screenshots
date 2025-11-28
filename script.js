@@ -46,6 +46,24 @@ function initVideoPlayer() {
                 'playbackRateMenuButton',
                 'fullscreenToggle'
             ]
+        },
+        userActions: {
+            hotkeys(event) {
+                const target = event.target;
+                const tag = target && target.tagName ? target.tagName.toLowerCase() : '';
+                const isFormField = tag === 'input' || tag === 'textarea' || tag === 'select';
+                if (isFormField || (target && target.isContentEditable)) {
+                    return;
+                }
+                if (event.key === ' ' || event.code === 'Space') {
+                    event.preventDefault();
+                    if (this.paused()) {
+                        this.play();
+                    } else {
+                        this.pause();
+                    }
+                }
+            }
         }
     });
 
@@ -98,14 +116,7 @@ function loadVideo(file) {
     }
     
     manualScreenshots = [];
-    const countElement = document.getElementById('manualScreenshotCount');
-    if (countElement) {
-        countElement.textContent = '0';
-    }
-    const editorBtn = document.getElementById('openManualEditorBtn');
-    if (editorBtn) {
-        editorBtn.disabled = true;
-    }
+    updateManualScreenshotControls();
     
     const url = URL.createObjectURL(file);
     const isMKV = file.name.toLowerCase().endsWith('.mkv');
@@ -953,25 +964,26 @@ function captureManualScreenshot() {
     
     manualScreenshots.push(screenshot);
     
-    const countElement = document.getElementById('manualScreenshotCount');
-    if (countElement) {
-        countElement.textContent = manualScreenshots.length;
-    }
-    
-    const editorBtn = document.getElementById('openManualEditorBtn');
-    if (editorBtn) {
-        editorBtn.disabled = manualScreenshots.length === 0;
-    }
+    updateManualScreenshotControls();
     
     showStatus(`已截取 ${manualScreenshots.length} 张截图`, 'success');
 }
 
+function clearManualScreenshots() {
+    if (manualScreenshots.length === 0) return;
+    manualScreenshots = [];
+    updateManualScreenshotControls();
+    showStatus('已清空手动截图', 'info');
+}
+
 const captureScreenshotBtn = document.getElementById('captureScreenshotBtn');
 const openManualEditorBtn = document.getElementById('openManualEditorBtn');
+const clearManualScreenshotsBtn = document.getElementById('clearManualScreenshotsBtn');
 
 if (captureScreenshotBtn) {
     captureScreenshotBtn.addEventListener('click', function() {
         captureManualScreenshot();
+        captureScreenshotBtn.blur();
     });
 }
 
@@ -979,6 +991,13 @@ if (openManualEditorBtn) {
     openManualEditorBtn.addEventListener('click', function() {
         if (manualScreenshots.length === 0) return;
         openScreenshotEditor(manualScreenshots);
+    });
+}
+
+if (clearManualScreenshotsBtn) {
+    clearManualScreenshotsBtn.addEventListener('click', function() {
+        clearManualScreenshots();
+        clearManualScreenshotsBtn.blur();
     });
 }
 
@@ -1059,6 +1078,21 @@ let cropData = {};
 let stitchedImageData = null;
 let currentStitchMode = 'dialogue';
 let manualScreenshots = []; 
+
+function updateManualScreenshotControls() {
+    const countElement = document.getElementById('manualScreenshotCount');
+    if (countElement) {
+        countElement.textContent = manualScreenshots.length;
+    }
+    const editorBtn = document.getElementById('openManualEditorBtn');
+    if (editorBtn) {
+        editorBtn.disabled = manualScreenshots.length === 0;
+    }
+    const clearBtn = document.getElementById('clearManualScreenshotsBtn');
+    if (clearBtn) {
+        clearBtn.disabled = manualScreenshots.length === 0;
+    }
+}
 
 const modal = document.getElementById('screenshotEditor');
 const closeEditorBtn = document.getElementById('closeEditor');

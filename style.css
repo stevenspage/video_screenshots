@@ -230,6 +230,29 @@ body {
     white-space: nowrap;
 }
 
+.clear-manual-btn {
+    padding: 4px 10px;
+    font-size: 12px;
+    color: #999;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: all 0.2s;
+}
+
+.clear-manual-btn:hover:not(:disabled) {
+    color: rgba(255, 255, 255, 0.95);
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.clear-manual-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 .open-editor-btn {
     display: flex;
     align-items: center;
@@ -1240,11 +1263,20 @@ input[type="file"] {
     
     .subtitle-section {
         width: 100%;
-        min-height: 400px;
+        min-height: 0;
+        height: 60vh;
+        max-height: 60vh;
     }
     
     .video-wrapper {
-        min-height: 400px;
+        flex: none;
+        width: 100%;
+        min-height: auto;
+        aspect-ratio: 16 / 9;
+    }
+
+    .subtitle-list {
+        min-height: 0;
     }
 }
 
