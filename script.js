@@ -200,7 +200,6 @@ function loadSubtitle(file) {
         
         if (subtitles.length > 0) {
             displaySubtitles();
-            showStatus(`成功加载 ${subtitles.length} 条字幕`, 'success');
         } else {
             showStatus('字幕文件格式错误或为空', 'error');
         }

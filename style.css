@@ -1144,7 +1144,12 @@ input[type="file"] {
     margin-top: 6px;
     font-size: 13px;
     color: #666;
-    min-height: 20px;
+    min-height: 0;
+    line-height: 1.2;
+}
+
+.search-results:empty {
+    display: none;
 }
 
 .search-results.has-results {
@@ -1264,8 +1269,8 @@ input[type="file"] {
     .subtitle-section {
         width: 100%;
         min-height: 0;
-        height: 60vh;
-        max-height: 60vh;
+        height: 55vh;
+        max-height: 55vh;
     }
     
     .video-wrapper {
@@ -1294,11 +1299,94 @@ input[type="file"] {
     }
     
     .control-group {
-        flex-direction: column;
-        align-items: stretch;
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
     }
     
     .file-label {
-        justify-content: center;
+        flex-shrink: 0;
+        padding: 8px 14px;
+        font-size: 13px;
+    }
+    
+    .file-label svg {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .file-name {
+        flex: 1;
+        min-width: 0;
+        font-size: 12px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .subtitle-search {
+        padding: 4px 12px 0px 12px;
+        border-bottom: none;
+    }
+    
+    #subtitleSearchInput {
+        padding: 6px 32px 6px 32px;
+        font-size: 13px;
+        border-width: 1px;
+    }
+    
+    .search-icon {
+        left: 10px;
+    }
+    
+    .search-icon,
+    .search-icon svg {
+        width: 14px !important;
+        height: 14px !important;
+    }
+    
+    .clear-search {
+        right: 6px;
+        padding: 4px;
+    }
+    
+    .clear-search svg {
+        width: 14px !important;
+        height: 14px !important;
+    }
+    
+    .search-results {
+        font-size: 12px;
+        margin-top: 2px;
+        min-height: 0;
+        margin-bottom: 0;
+        padding: 0;
+        line-height: 1.2;
+    }
+    
+    .search-results:empty {
+        display: none;
+    }
+    
+    .subtitle-list {
+        padding: 2px 8px 8px 8px;
+    }
+    
+    .subtitle-header {
+        padding: 8px 12px;
+        border-bottom-width: 1px;
+    }
+    
+    .subtitle-header h2 {
+        font-size: 16px;
+        font-weight: 600;
+    }
+    
+    .subtitle-count {
+        font-size: 12px;
+    }
+    
+    .subtitle-toolbar {
+        padding: 8px 12px;
     }
 }
