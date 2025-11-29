@@ -121,6 +121,7 @@ function loadVideo(file) {
     const url = URL.createObjectURL(file);
     const isMKV = file.name.toLowerCase().endsWith('.mkv');
     
+    player.poster('');
     player.src({
         type: getMimeType(file),
         src: url
@@ -1373,22 +1374,15 @@ async function downloadAllScreenshots() {
         
         const promises = editorScreenshots.map((screenshot, index) => {
             return new Promise((resolve) => {
-                const crop = cropData[index];
-                const canvas = document.createElement('canvas');
-                canvas.width = crop.width;
-                canvas.height = crop.height;
-                const ctx = canvas.getContext('2d');
-                
-                const img = new Image();
-                img.onload = function() {
-                    ctx.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
-                    
-                    canvas.toBlob((blob) => {
-                        zip.file(`${index + 1}.png`, blob);
-                        resolve();
-                    }, 'image/png');
-                };
-                img.src = screenshot.data;
+                const base64Data = screenshot.data.split(',')[1];
+                const binaryString = atob(base64Data);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const blob = new Blob([bytes], { type: 'image/png' });
+                zip.file(`${index + 1}.png`, blob);
+                resolve();
             });
         });
         
@@ -1772,11 +1766,17 @@ async function generateStitchedImage() {
             
             let crop;
             if (currentStitchMode === 'dialogue' && i === 0) {
+                const cropInfo = cropData[i] || {
+                    x: 0,
+                    y: screenshot.height - Math.floor(screenshot.height * 0.20),
+                    width: screenshot.width,
+                    height: Math.floor(screenshot.height * 0.20)
+                };
                 crop = {
                     x: 0,
                     y: 0,
                     width: screenshot.width,
-                    height: screenshot.height
+                    height: cropInfo.y + cropInfo.height
                 };
             } else {
                 crop = cropData[i];
@@ -1826,6 +1826,7 @@ async function generateStitchedImage() {
 async function loadDemoFiles() {
     const demoVideoPath = 'playback_demo/House-of-Cards-Series-Trailer_with_subtitles.mp4';
     const demoSubtitlePath = 'playback_demo/House-of-Cards-Series-Trailer.srt';
+    const demoPosterPath = 'playback_demo/House-of-Cards-Series-Trailer-cover.jpg';
     
     try {
         const videoResponse = await fetch(demoVideoPath, { method: 'HEAD' });
@@ -1842,6 +1843,7 @@ async function loadDemoFiles() {
             initVideoPlayer();
         }
         
+        player.poster(demoPosterPath);
         player.src({
             type: 'video/mp4',
             src: demoVideoPath
