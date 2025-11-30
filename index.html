@@ -98,6 +98,11 @@
                 </div>
                 
                 <div id="subtitleStatus" class="subtitle-status"></div>
+                <button id="helpBtn" class="help-btn" title="使用教程">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
+                    </svg>
+                </button>
             </div>
         </div>
         
@@ -260,6 +265,126 @@
                         </div>
                         <div id="previewContainer" class="preview-container"></div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 教程弹窗 -->
+    <div id="tutorialModal" class="tutorial-modal">
+        <div class="tutorial-content">
+            <div class="tutorial-header">
+                <h2>📖 使用教程</h2>
+                <button id="closeTutorialBtn" class="close-tutorial-btn">×</button>
+            </div>
+            <div class="tutorial-body">
+                <div class="tutorial-section">
+                    <h3>🚀 快速开始</h3>
+                    <div class="tutorial-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <strong>加载视频和字幕</strong>
+                            <p>点击"选择视频"和"选择字幕"按钮，或直接拖放文件到播放区域</p>
+                        </div>
+                    </div>
+                    <div class="tutorial-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <strong>选择要截图的字幕</strong>
+                            <p>在右侧字幕列表中勾选需要截图的字幕，支持 Shift 键快速连选</p>
+                        </div>
+                    </div>
+                    <div class="tutorial-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <strong>生成截图</strong>
+                            <p>点击"字幕截图"按钮，系统会自动跳转到每条字幕的时间点进行截图</p>
+                        </div>
+                    </div>
+                    <div class="tutorial-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <strong>编辑和下载</strong>
+                            <p>点击"拼接截图"进入编辑器，调整裁剪区域后下载最终图片</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tutorial-section">
+                    <h3>🎯 核心功能</h3>
+                    <div class="feature-grid">
+                        <div class="feature-item">
+                            <div class="feature-icon">📸</div>
+                            <strong>批量截图</strong>
+                            <p>选择多条字幕，一键批量截图</p>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">✋</div>
+                            <strong>手动截图</strong>
+                            <p>暂停时点击截图按钮，精确控制截图时间</p>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">🔍</div>
+                            <strong>搜索字幕</strong>
+                            <p>输入关键词快速定位要截取的内容</p>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">✂️</div>
+                            <strong>智能裁剪</strong>
+                            <p>可视化调整裁剪区域，支持两种拼接模式</p>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">🔄</div>
+                            <strong>重复播放</strong>
+                            <p>勾选字幕后点击"重复播放"，自动循环播放</p>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">⌨️</div>
+                            <strong>快捷键</strong>
+                            <p>空格播放/暂停，方向键控制进度和字幕导航</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tutorial-section">
+                    <h3>⌨️ 键盘快捷键</h3>
+                    <div class="shortcuts-grid">
+                        <div class="shortcut-item">
+                            <kbd>空格</kbd>
+                            <span>播放/暂停</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <kbd>←</kbd>
+                            <span>后退 5 秒</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <kbd>→</kbd>
+                            <span>前进 5 秒</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <kbd>↑</kbd>
+                            <span>上一条字幕</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <kbd>↓</kbd>
+                            <span>下一条字幕</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <kbd>Shift</kbd>
+                            <span>连选字幕</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tutorial-section">
+                    <h3>💡 使用技巧</h3>
+                    <ul class="tips-list">
+                        <li>💬 <strong>连续台词模式</strong>：第一张完整画面，其余裁剪字幕区域（适合对话场景）</li>
+                        <li>🎬 <strong>连续画面模式</strong>：所有截图使用统一裁剪（适合连续镜头）</li>
+                        <li>🔍 <strong>搜索功能</strong>：输入关键词后，点击搜索结果可直接跳转并选中字幕</li>
+                        <li>📱 <strong>移动端</strong>：支持触摸操作，可以拖动调整裁剪区域</li>
+                        <li>🎨 <strong>自定义样式</strong>：在编辑器中可以调整间距、边距和背景颜色</li>
+                    </ul>
                 </div>
             </div>
         </div>

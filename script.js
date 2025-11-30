@@ -1922,3 +1922,48 @@ console.log('  空格：播放/暂停');
 console.log('  ←/→：后退/前进 5 秒');
 console.log('  ↑/↓：跳转到上一条/下一条字幕');
 
+// 教程弹窗控制
+function initTutorialModal() {
+    const helpBtn = document.getElementById('helpBtn');
+    const tutorialModal = document.getElementById('tutorialModal');
+    const closeTutorialBtn = document.getElementById('closeTutorialBtn');
+    
+    if (helpBtn && tutorialModal && closeTutorialBtn) {
+        helpBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            tutorialModal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        });
+        
+        closeTutorialBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            tutorialModal.classList.remove('show');
+            document.body.style.overflow = '';
+        });
+        
+        tutorialModal.addEventListener('click', function(e) {
+            if (e.target === tutorialModal) {
+                tutorialModal.classList.remove('show');
+                document.body.style.overflow = '';
+            }
+        });
+        
+        // ESC键关闭
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && tutorialModal.classList.contains('show')) {
+                tutorialModal.classList.remove('show');
+                document.body.style.overflow = '';
+            }
+        });
+    }
+}
+
+// 确保DOM加载完成后初始化
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTutorialModal);
+} else {
+    initTutorialModal();
+}
+
