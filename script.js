@@ -92,6 +92,22 @@ function initVideoPlayer() {
 videoInput.addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (file) {
+        const fileType = file.type;
+        const fileName = file.name.toLowerCase();
+        const isVideo = fileType.startsWith('video/') || 
+                       fileName.endsWith('.mp4') || 
+                       fileName.endsWith('.mkv') || 
+                       fileName.endsWith('.avi') || 
+                       fileName.endsWith('.mov') || 
+                       fileName.endsWith('.webm') || 
+                       fileName.endsWith('.flv');
+        
+        if (!isVideo) {
+            alert('请选择视频文件');
+            e.target.value = '';
+            return;
+        }
+        
         videoFile = file;
         loadVideo(file);
         videoFileName.textContent = file.name;
