@@ -1196,6 +1196,13 @@ function loadScreenshotList() {
         
         const img = document.createElement('img');
         img.src = screenshot.data;
+        img.style.width = '100%';
+        img.style.height = 'auto';
+        img.style.display = 'block';
+        img.style.objectFit = 'cover';
+        img.onerror = function() {
+            this.style.display = 'none';
+        };
         
         const info = document.createElement('div');
         info.className = 'screenshot-item-info';
@@ -1526,7 +1533,9 @@ let dragStartX, dragStartY;
 let resizeHandle = null;
 let initialCrop = {};
 
-cropBox.addEventListener('mousedown', function(e) {
+function handleCropStart(e) {
+    const touch = e.touches ? e.touches[0] : e;
+    
     if (e.target.classList.contains('crop-handle')) {
         isResizing = true;
         resizeHandle = e.target;
@@ -1534,18 +1543,22 @@ cropBox.addEventListener('mousedown', function(e) {
         isDragging = true;
     }
     
-    dragStartX = e.clientX;
-    dragStartY = e.clientY;
+    dragStartX = touch.clientX;
+    dragStartY = touch.clientY;
     initialCrop = { ...cropData[currentEditingIndex] };
     
     e.preventDefault();
-});
+}
 
-document.addEventListener('mousemove', function(e) {
+cropBox.addEventListener('mousedown', handleCropStart);
+cropBox.addEventListener('touchstart', handleCropStart, { passive: false });
+
+function handleCropMove(e) {
     if (!isDragging && !isResizing) return;
     
-    const deltaX = e.clientX - dragStartX;
-    const deltaY = e.clientY - dragStartY;
+    const touch = e.touches ? e.touches[0] : e;
+    const deltaX = touch.clientX - dragStartX;
+    const deltaY = touch.clientY - dragStartY;
     const screenshot = editorScreenshots[currentEditingIndex];
     const scale = editorCanvas.width / screenshot.width;
     
@@ -1562,10 +1575,13 @@ document.addEventListener('mousemove', function(e) {
     }
     
     updateCropBox();
-});
+    e.preventDefault();
+}
 
-document.addEventListener('mouseup', function() {
-    
+document.addEventListener('mousemove', handleCropMove);
+document.addEventListener('touchmove', handleCropMove, { passive: false });
+
+function handleCropEnd() {
     if ((isDragging || isResizing) && currentEditingIndex === 0) {
         autoApplyCropToAll();
     }
@@ -1573,7 +1589,11 @@ document.addEventListener('mouseup', function() {
     isDragging = false;
     isResizing = false;
     resizeHandle = null;
-});
+}
+
+document.addEventListener('mouseup', handleCropEnd);
+document.addEventListener('touchend', handleCropEnd);
+document.addEventListener('touchcancel', handleCropEnd);
 
 window.addEventListener('resize', function() {
     if (modal.classList.contains('show') && editorScreenshots.length > 0) {
