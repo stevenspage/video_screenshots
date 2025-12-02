@@ -930,7 +930,7 @@ async function captureScreenshots(indices) {
         await seekToTime(subtitle.startTime);
         
         player.play();
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 400));
         player.pause();
         
         const canvas = document.createElement('canvas');
