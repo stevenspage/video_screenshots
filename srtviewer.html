@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字幕浏览器</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="subtitle_viewer_only.css">
+</head>
+<body>
+    <div class="container">
+        <div class="subtitle-section">
+            <div class="subtitle-header">
+                <h2>字幕列表（支持SHIFT键选择）</h2>
+                <div id="subtitleCount" class="subtitle-count">0 条字幕</div>
+            </div>
+            <div class="subtitle-toolbar">
+                <div class="toolbar-left">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="selectAllSubtitles" />
+                        <span>全选</span>
+                    </label>
+                    <span id="selectedCount" class="selected-count">已选 0 条</span>
+                </div>
+                <div class="toolbar-right">
+                    <div class="subtitle-mode-controls">
+                        <span class="mode-label">显示:</span>
+                        <button class="mode-btn active" data-mode="both" title="双语字幕">双语</button>
+                        <button class="mode-btn" data-mode="english" title="仅英文">仅英文</button>
+                        <button class="mode-btn" data-mode="chinese" title="仅中文">仅中文</button>
+                    </div>
+                    <div class="font-size-controls">
+                        <span class="font-size-label">字体:</span>
+                        <button class="font-size-btn" data-size="small" title="小号字体">小</button>
+                        <button class="font-size-btn active" data-size="medium" title="中号字体">中</button>
+                        <button class="font-size-btn" data-size="large" title="大号字体">大</button>
+                    </div>
+                    <button id="fullscreenBtn" class="fullscreen-btn" title="全屏">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="file-controls-section">
+                <div class="control-group">
+                    <label for="subtitleInput" class="file-label">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        选择字幕文件
+                    </label>
+                    <input type="file" id="subtitleInput" accept=".srt" />
+                    <span id="subtitleFileName" class="file-name">未选择文件</span>
+                </div>
+                <div id="subtitleStatus" class="subtitle-status"></div>
+            </div>
+            <div class="subtitle-search">
+                <div class="search-input-wrapper">
+                    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                    <input type="text" id="subtitleSearchInput" placeholder="搜索字幕内容..." />
+                    <button id="clearSearch" class="clear-search" style="display: none;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div id="searchResults" class="search-results"></div>
+            </div>
+            <div id="subtitleList" class="subtitle-list">
+                <div class="subtitle-empty">
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                    <p>暂无字幕</p>
+                    <small style="opacity: 0.6; margin-top: 8px; display: block;">请选择字幕文件（.srt格式）</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="subtitle_viewer_only.js"></script>
+</body>
+</html>
+
