@@ -51,6 +51,34 @@ function loadSubtitle(file) {
     reader.readAsArrayBuffer(file);
 }
 
+// 从 URL 加载字幕文件
+async function loadSubtitleFromUrl(url, filename) {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const arrayBuffer = await response.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
+        
+        let content = detectAndDecodeSubtitle(uint8Array);
+        
+        subtitles = parseSRT(content);
+        
+        if (subtitles.length > 0) {
+            displaySubtitles();
+            showStatus(`成功加载 ${subtitles.length} 条字幕`, 'success');
+            subtitleFileName.textContent = filename || 'demo.srt';
+        } else {
+            showStatus('字幕文件格式错误或为空', 'error');
+        }
+    } catch (error) {
+        console.error('加载字幕文件失败:', error);
+        showStatus('加载字幕文件失败: ' + error.message, 'error');
+    }
+}
+
 function detectAndDecodeSubtitle(uint8Array) {
     if (uint8Array.length >= 3) {
         if (uint8Array[0] === 0xEF && uint8Array[1] === 0xBB && uint8Array[2] === 0xBF) {
@@ -845,6 +873,32 @@ function updateSubtitleDisplayMode() {
             }
         }
     });
+}
+
+// 自动加载演示字幕文件
+async function loadDemoSubtitle() {
+    const demoSubtitlePath = 'playback_demo/House-of-Cards-Series-Trailer.srt';
+    
+    try {
+        // 检查文件是否存在
+        const response = await fetch(demoSubtitlePath, { method: 'HEAD' });
+        if (response.ok) {
+            // 文件存在，加载它
+            await loadSubtitleFromUrl(demoSubtitlePath, 'House-of-Cards-Series-Trailer.srt');
+        }
+    } catch (error) {
+        // 文件不存在或加载失败，静默失败（不显示错误）
+        console.log('演示字幕文件不存在，跳过自动加载');
+    }
+}
+
+// 页面加载完成后自动加载演示字幕
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(loadDemoSubtitle, 300);
+    });
+} else {
+    setTimeout(loadDemoSubtitle, 300);
 }
 
 console.log('字幕浏览器已就绪');
