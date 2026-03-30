@@ -455,7 +455,8 @@ function updateSubtitleHighlight() {
                 const listTopRelativeToViewport = listRect.top;
                 const itemTopRelativeToList = itemTopRelativeToViewport - listTopRelativeToViewport + currentScrollTop;
                 const itemCenterRelativeToList = itemTopRelativeToList + (itemHeight / 2);
-                const targetScrollTop = itemCenterRelativeToList - (listHeight / 2);
+                // 让当前字幕停在可视区中间偏上，减少“跳到最顶/最中”的突兀感
+                const targetScrollTop = itemCenterRelativeToList - (listHeight * 0.35);
                 
                 subtitleList.scrollTo({
                     top: Math.max(0, targetScrollTop),
