@@ -18,6 +18,10 @@ const repeatPlayText = document.getElementById('repeatPlayText');
 const repeatPlayIcon = document.getElementById('repeatPlayIcon');
 const selectedCountSpan = document.getElementById('selectedCount');
 const subtitleToolbar = document.querySelector('.subtitle-toolbar');
+const appContainer = document.querySelector('.container');
+const videoSection = document.querySelector('.video-section');
+const subtitleSection = document.querySelector('.subtitle-section');
+const layoutResizer = document.getElementById('layoutResizer');
 
 let subtitles = [];
 let currentSubtitleIndex = -1;
@@ -27,6 +31,18 @@ let lastCheckedIndex = -1;
 let isRepeating = false;
 let repeatInterval = null;
 let repeatTimeUpdateHandler = null;
+
+const DEFAULT_SUBTITLE_WIDTH = 400;
+const MIN_SUBTITLE_WIDTH = 280;
+const MIN_VIDEO_WIDTH = 420;
+const MIN_SUBTITLE_FONT_SCALE = 1;
+const MAX_SUBTITLE_FONT_SCALE = 1.35;
+const LAYOUT_STORAGE_KEY = 'vib-player-subtitle-width';
+
+let isLayoutResizing = false;
+let layoutDragStartX = 0;
+let layoutStartSubtitleWidth = DEFAULT_SUBTITLE_WIDTH;
+let preferredSubtitleWidth = DEFAULT_SUBTITLE_WIDTH;
 
 function initVideoPlayer() {
     player = videojs('videoPlayer', {
@@ -463,7 +479,203 @@ function showStatus(message, type) {
     }
 }
 
-const videoSection = document.querySelector('.video-section');
+function clamp(value, min, max) {
+    return Math.max(min, Math.min(value, max));
+}
+
+function isDesktopLayout() {
+    return window.matchMedia('(min-width: 1025px)').matches;
+}
+
+function getLayoutBounds() {
+    if (!appContainer || !layoutResizer) return null;
+    
+    const containerWidth = appContainer.getBoundingClientRect().width;
+    const resizerWidth = layoutResizer.getBoundingClientRect().width || 12;
+    const maxSubtitleWidth = Math.max(MIN_SUBTITLE_WIDTH, containerWidth - MIN_VIDEO_WIDTH - resizerWidth);
+    const minSubtitleWidth = Math.min(MIN_SUBTITLE_WIDTH, maxSubtitleWidth);
+    
+    return { minSubtitleWidth, maxSubtitleWidth };
+}
+
+function updateSubtitleFontScale(subtitleWidth) {
+    if (!subtitleSection) return;
+    
+    const widthDelta = Math.max(0, subtitleWidth - DEFAULT_SUBTITLE_WIDTH);
+    const scale = clamp(
+        1 + widthDelta / 800,
+        MIN_SUBTITLE_FONT_SCALE,
+        MAX_SUBTITLE_FONT_SCALE
+    );
+    
+    subtitleSection.style.setProperty('--subtitle-font-scale', scale.toFixed(3));
+
+    const bounds = getLayoutBounds();
+    if (!bounds) return;
+
+    const maxWidth = Math.max(DEFAULT_SUBTITLE_WIDTH, bounds.maxSubtitleWidth);
+    const widthRange = Math.max(1, maxWidth - DEFAULT_SUBTITLE_WIDTH);
+    const progress = clamp((subtitleWidth - DEFAULT_SUBTITLE_WIDTH) / widthRange, 0, 1);
+
+    // 和 srtviewer 的 "大" 档对齐：最宽时正文 28px、行高 2.2、时间 18px
+    const textSize = 14 + (28 - 14) * progress;
+    const timeSize = 12 + (18 - 12) * progress;
+    const textLineHeight = 1.6 + (2.2 - 1.6) * progress;
+
+    // 当前高亮字幕进一步放大并提高行高
+    const activeTextSize = 16 + (32 - 16) * progress;
+    const activeTimeSize = 13 + (18 - 13) * progress;
+    const activeLineHeight = 1.8 + (2.35 - 1.8) * progress;
+
+    subtitleSection.style.setProperty('--subtitle-text-size', `${textSize.toFixed(2)}px`);
+    subtitleSection.style.setProperty('--subtitle-time-size', `${timeSize.toFixed(2)}px`);
+    subtitleSection.style.setProperty('--subtitle-line-height', textLineHeight.toFixed(3));
+    subtitleSection.style.setProperty('--subtitle-active-text-size', `${activeTextSize.toFixed(2)}px`);
+    subtitleSection.style.setProperty('--subtitle-active-time-size', `${activeTimeSize.toFixed(2)}px`);
+    subtitleSection.style.setProperty('--subtitle-active-line-height', activeLineHeight.toFixed(3));
+}
+
+function clearDesktopLayoutStyles() {
+    if (!appContainer || !subtitleSection) return;
+    
+    appContainer.style.removeProperty('--subtitle-width');
+    subtitleSection.style.removeProperty('--subtitle-font-scale');
+    subtitleSection.style.removeProperty('--subtitle-text-size');
+    subtitleSection.style.removeProperty('--subtitle-time-size');
+    subtitleSection.style.removeProperty('--subtitle-line-height');
+    subtitleSection.style.removeProperty('--subtitle-active-text-size');
+    subtitleSection.style.removeProperty('--subtitle-active-time-size');
+    subtitleSection.style.removeProperty('--subtitle-active-line-height');
+}
+
+function applyLayoutWidth(targetWidth, saveToStorage = false) {
+    if (!appContainer || !subtitleSection || !layoutResizer) return;
+    
+    if (!isDesktopLayout()) {
+        clearDesktopLayoutStyles();
+        return;
+    }
+    
+    const bounds = getLayoutBounds();
+    if (!bounds) return;
+    
+    const nextWidth = clamp(targetWidth, bounds.minSubtitleWidth, bounds.maxSubtitleWidth);
+    appContainer.style.setProperty('--subtitle-width', `${nextWidth}px`);
+    updateSubtitleFontScale(nextWidth);
+    preferredSubtitleWidth = nextWidth;
+    
+    if (saveToStorage) {
+        try {
+            localStorage.setItem(LAYOUT_STORAGE_KEY, String(Math.round(nextWidth)));
+        } catch (e) {
+        }
+    }
+}
+
+function resetLayoutSize() {
+    preferredSubtitleWidth = DEFAULT_SUBTITLE_WIDTH;
+    
+    try {
+        localStorage.removeItem(LAYOUT_STORAGE_KEY);
+    } catch (e) {
+    }
+    
+    if (isDesktopLayout()) {
+        applyLayoutWidth(DEFAULT_SUBTITLE_WIDTH, false);
+    } else {
+        clearDesktopLayoutStyles();
+    }
+}
+
+function getPointerClientX(event) {
+    if (event.touches && event.touches.length > 0) {
+        return event.touches[0].clientX;
+    }
+    return event.clientX;
+}
+
+function startLayoutResize(event) {
+    if (!isDesktopLayout() || !subtitleSection) return;
+    
+    isLayoutResizing = true;
+    layoutDragStartX = getPointerClientX(event);
+    layoutStartSubtitleWidth = subtitleSection.getBoundingClientRect().width;
+    document.body.classList.add('layout-resizing');
+    event.preventDefault();
+}
+
+function moveLayoutResize(event) {
+    if (!isLayoutResizing) return;
+    
+    const currentX = getPointerClientX(event);
+    const deltaX = currentX - layoutDragStartX;
+    const targetWidth = layoutStartSubtitleWidth - deltaX;
+    
+    applyLayoutWidth(targetWidth, false);
+    event.preventDefault();
+}
+
+function endLayoutResize() {
+    if (!isLayoutResizing) return;
+    
+    isLayoutResizing = false;
+    document.body.classList.remove('layout-resizing');
+    applyLayoutWidth(preferredSubtitleWidth, true);
+}
+
+function handleResizerKeydown(event) {
+    if (!isDesktopLayout()) return;
+    
+    const step = event.shiftKey ? 30 : 12;
+    
+    if (event.key === 'ArrowLeft') {
+        applyLayoutWidth(preferredSubtitleWidth + step, true);
+        event.preventDefault();
+    } else if (event.key === 'ArrowRight') {
+        applyLayoutWidth(preferredSubtitleWidth - step, true);
+        event.preventDefault();
+    } else if (event.key === 'Home') {
+        resetLayoutSize();
+        event.preventDefault();
+    }
+}
+
+function initResizableLayout() {
+    if (!appContainer || !layoutResizer || !subtitleSection) return;
+    
+    try {
+        const savedWidth = parseFloat(localStorage.getItem(LAYOUT_STORAGE_KEY));
+        if (!Number.isNaN(savedWidth)) {
+            preferredSubtitleWidth = savedWidth;
+        }
+    } catch (e) {
+    }
+    
+    if (isDesktopLayout()) {
+        applyLayoutWidth(preferredSubtitleWidth, false);
+    } else {
+        clearDesktopLayoutStyles();
+    }
+    
+    layoutResizer.addEventListener('mousedown', startLayoutResize);
+    layoutResizer.addEventListener('touchstart', startLayoutResize, { passive: false });
+    layoutResizer.addEventListener('dblclick', resetLayoutSize);
+    layoutResizer.addEventListener('keydown', handleResizerKeydown);
+    
+    document.addEventListener('mousemove', moveLayoutResize);
+    document.addEventListener('touchmove', moveLayoutResize, { passive: false });
+    document.addEventListener('mouseup', endLayoutResize);
+    document.addEventListener('touchend', endLayoutResize);
+    document.addEventListener('touchcancel', endLayoutResize);
+    
+    window.addEventListener('resize', function() {
+        if (isDesktopLayout()) {
+            applyLayoutWidth(preferredSubtitleWidth, false);
+        } else {
+            clearDesktopLayoutStyles();
+        }
+    });
+}
 
 ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
     document.body.addEventListener(eventName, preventDefaults, false);
@@ -1960,10 +2172,14 @@ function initTutorialModal() {
     }
 }
 
-// 确保DOM加载完成后初始化
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initTutorialModal);
-} else {
+function initPageEnhancements() {
     initTutorialModal();
+    initResizableLayout();
 }
 
+// 确保DOM加载完成后初始化
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPageEnhancements);
+} else {
+    initPageEnhancements();
+}
