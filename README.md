@@ -1,6 +1,6 @@
-# Vib Player 电影台词批量截图神器
+# Vib Player 美剧精听播放器 电影台词批量截图神器
 
-> 🔗 **体验地址**: [stevenspage.github.io/video_screenshots](https://stevenspage.github.io/video_screenshots)
+> 🔗 **体验地址**: [vibplayer.stevenpub.com](https://vibplayer.stevenpub.com/video_screenshots)
 
 基于字幕批量生成视频截图并智能拼接成台词海报，支持选定字幕片段自动重复播放，便于学习和复习。纯前端网页，所有数据处理均在本地完成，无需上传服务器，保护您的隐私安全。
 
