@@ -20,6 +20,7 @@ const singlePlayModeBtn = document.getElementById('singlePlayModeBtn');
 const subtitleMaskToggleBtn = document.getElementById('subtitleMaskToggleBtn');
 const subtitleMaskOverlay = document.getElementById('subtitleMaskOverlay');
 const subtitleMaskHandle = document.getElementById('subtitleMaskHandle');
+const subtitleDisplayModeBtn = document.getElementById('subtitleDisplayModeBtn');
 const selectedCountSpan = document.getElementById('selectedCount');
 const subtitleToolbar = document.querySelector('.subtitle-toolbar');
 const appContainer = document.querySelector('.container');
@@ -39,7 +40,12 @@ let repeatTimeUpdateHandler = null;
 const SINGLE_LINE_MODE_OFF = 0;
 const SINGLE_LINE_MODE_PLAY = 1;
 const SINGLE_LINE_MODE_PREVIEW = 2;
+const SUBTITLE_DISPLAY_MODE_BILINGUAL = 0;
+const SUBTITLE_DISPLAY_MODE_ENGLISH = 1;
+const SUBTITLE_DISPLAY_MODE_CHINESE = 2;
+const SUBTITLE_DISPLAY_MODE_HIDDEN = 3;
 let singleLineModeState = SINGLE_LINE_MODE_OFF;
+let subtitleDisplayMode = SUBTITLE_DISPLAY_MODE_BILINGUAL;
 let isSingleLinePlaying = false;
 let singleLineTimeUpdateHandler = null;
 let statusHideTimer = null;
@@ -455,18 +461,75 @@ function parseSRT(content) {
                 const startTime = parseTime(timeMatch[1], timeMatch[2], timeMatch[3], timeMatch[4]);
                 const endTime = parseTime(timeMatch[5], timeMatch[6], timeMatch[7], timeMatch[8]);
                 const text = lines.slice(2).join('\n');
+                const languageParts = splitSubtitleByLanguage(text);
                 
                 subtitles.push({
                     index: index,
                     startTime: startTime,
                     endTime: endTime,
-                    text: text
+                    text: text,
+                    chineseText: languageParts.chineseText,
+                    englishText: languageParts.englishText
                 });
             }
         }
     });
     
     return subtitles;
+}
+
+function cleanSubtitleLine(line) {
+    return line
+        .replace(/\{\\[^}]*\}/g, '')
+        .replace(/<[^>]+>/g, '')
+        .trim();
+}
+
+function splitSubtitleByLanguage(text) {
+    const rawLines = text.split('\n').map(line => line.trim()).filter(Boolean);
+    const lines = rawLines.map(cleanSubtitleLine).filter(Boolean);
+    const chineseLines = [];
+    const englishLines = [];
+
+    lines.forEach(line => {
+        const hasChinese = /[\u3400-\u9fff]/.test(line);
+        const hasEnglish = /[A-Za-z]/.test(line);
+
+        if (hasChinese) {
+            chineseLines.push(line);
+        }
+        if (hasEnglish) {
+            englishLines.push(line);
+        }
+
+        if (!hasChinese && !hasEnglish) {
+            chineseLines.push(line);
+            englishLines.push(line);
+        }
+    });
+
+    return {
+        chineseText: chineseLines.join('\n'),
+        englishText: englishLines.join('\n')
+    };
+}
+
+function getSubtitleDisplayText(subtitle) {
+    if (!subtitle) return '';
+
+    if (subtitleDisplayMode === SUBTITLE_DISPLAY_MODE_HIDDEN) {
+        return '';
+    }
+
+    if (subtitleDisplayMode === SUBTITLE_DISPLAY_MODE_ENGLISH) {
+        return subtitle.englishText || '';
+    }
+
+    if (subtitleDisplayMode === SUBTITLE_DISPLAY_MODE_CHINESE) {
+        return subtitle.chineseText || '';
+    }
+
+    return subtitle.text || '';
 }
 
 function parseTime(hours, minutes, seconds, milliseconds) {
@@ -517,7 +580,7 @@ function displaySubtitles() {
         
         const textDiv = document.createElement('div');
         textDiv.className = 'subtitle-text';
-        textDiv.textContent = subtitle.text;
+        textDiv.textContent = getSubtitleDisplayText(subtitle);
         
         contentDiv.appendChild(timeDiv);
         contentDiv.appendChild(textDiv);
@@ -558,6 +621,7 @@ function displaySubtitles() {
     selectAllCheckbox.checked = false;
     updateSelectedCount();
     updateSinglePlayModeButton();
+    updateSubtitleDisplayModeButton();
 }
 
 function updateCurrentSubtitle(currentTime) {
@@ -1239,6 +1303,45 @@ function updateSinglePlayModeButton() {
     singlePlayModeBtn.title = label;
     singlePlayModeBtn.setAttribute('aria-label', label);
 }
+
+function updateSubtitleDisplayModeButton() {
+    if (!subtitleDisplayModeBtn) return;
+
+    subtitleDisplayModeBtn.classList.remove('mode-bilingual', 'mode-english', 'mode-chinese', 'mode-hidden');
+
+    let label = '字幕显示：双语（点击切换为仅英文）';
+    let shortLabel = 'EN|中';
+
+    if (subtitleDisplayMode === SUBTITLE_DISPLAY_MODE_ENGLISH) {
+        subtitleDisplayModeBtn.classList.add('mode-english');
+        label = '字幕显示：仅英文（点击切换为仅中文）';
+        shortLabel = 'EN';
+    } else if (subtitleDisplayMode === SUBTITLE_DISPLAY_MODE_CHINESE) {
+        subtitleDisplayModeBtn.classList.add('mode-chinese');
+        label = '字幕显示：仅中文（点击切换为隐藏字幕）';
+        shortLabel = '中';
+    } else if (subtitleDisplayMode === SUBTITLE_DISPLAY_MODE_HIDDEN) {
+        subtitleDisplayModeBtn.classList.add('mode-hidden');
+        label = '字幕显示：隐藏字幕（点击切换为双语）';
+        shortLabel = '隐';
+    } else {
+        subtitleDisplayModeBtn.classList.add('mode-bilingual');
+    }
+
+    subtitleDisplayModeBtn.innerHTML = `<span class="subtitle-display-mode-label">${shortLabel}</span>`;
+    subtitleDisplayModeBtn.title = label;
+    subtitleDisplayModeBtn.setAttribute('aria-label', label);
+
+    if (subtitleList) {
+        subtitleList.classList.toggle('subtitle-text-hidden', subtitleDisplayMode === SUBTITLE_DISPLAY_MODE_HIDDEN);
+    }
+}
+
+function refreshSubtitleDisplayByMode() {
+    filterSubtitles(subtitleSearchInput.value.trim());
+    updateSubtitleHighlight();
+}
+
 function stopSingleLinePlay(shouldPause = true) {
     if (player && singleLineTimeUpdateHandler) {
         player.off('timeupdate', singleLineTimeUpdateHandler);
@@ -1328,6 +1431,24 @@ if (singlePlayModeBtn) {
         updateSinglePlayModeButton();
     });
 }
+
+if (subtitleDisplayModeBtn) {
+    subtitleDisplayModeBtn.addEventListener('click', function() {
+        subtitleDisplayMode = (subtitleDisplayMode + 1) % 4;
+        updateSubtitleDisplayModeButton();
+        refreshSubtitleDisplayByMode();
+
+        const modeMessage = subtitleDisplayMode === SUBTITLE_DISPLAY_MODE_ENGLISH
+            ? '字幕显示已切换：仅英文'
+            : subtitleDisplayMode === SUBTITLE_DISPLAY_MODE_CHINESE
+                ? '字幕显示已切换：仅中文'
+                : subtitleDisplayMode === SUBTITLE_DISPLAY_MODE_HIDDEN
+                    ? '字幕显示已切换：隐藏字幕'
+                    : '字幕显示已切换：双语';
+        showStatus(modeMessage, 'info', 2000, true);
+    });
+}
+
 repeatPlayBtn.addEventListener('click', function() {
     if (!player) {
         alert('请先加载视频');
@@ -1573,7 +1694,8 @@ function filterSubtitles(keyword) {
             if (textDiv) {
                 const index = parseInt(item.dataset.index);
                 if (subtitles[index]) {
-                    textDiv.innerHTML = escapeHtml(subtitles[index].text);
+                    const displayText = getSubtitleDisplayText(subtitles[index]);
+                    textDiv.innerHTML = escapeHtml(displayText);
                 }
             }
         });
@@ -1588,15 +1710,16 @@ function filterSubtitles(keyword) {
     items.forEach(item => {
         const index = parseInt(item.dataset.index);
         const subtitle = subtitles[index];
+        const displayText = getSubtitleDisplayText(subtitle);
         
-        if (subtitle && subtitle.text.toLowerCase().includes(lowerKeyword)) {
+        if (displayText.toLowerCase().includes(lowerKeyword)) {
             
             item.style.display = '';
             matchCount++;
             
             const textDiv = item.querySelector('.subtitle-text');
             if (textDiv) {
-                textDiv.innerHTML = highlightKeyword(subtitle.text, keyword);
+                textDiv.innerHTML = highlightKeyword(displayText, keyword);
             }
         } else {
             
@@ -2675,6 +2798,7 @@ function initPageEnhancements() {
     initTutorialModal();
     initResizableLayout();
     initSubtitleMaskControls();
+    updateSubtitleDisplayModeButton();
 }
 
 // 确保DOM加载完成后初始化

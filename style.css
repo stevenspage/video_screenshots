@@ -490,6 +490,71 @@ body.subtitle-mask-dragging * {
     box-shadow: 0 4px 12px rgba(17, 24, 39, 0.45);
 }
 
+.subtitle-display-mode-btn {
+    position: absolute;
+    bottom: 16px;
+    right: 64px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #667eea;
+    z-index: 10;
+    transition: all 0.3s;
+}
+
+.subtitle-display-mode-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.subtitle-display-mode-btn.mode-bilingual {
+    background: #f8f9fa;
+    border-color: #e0e0e0;
+    color: #667eea;
+}
+
+.subtitle-display-mode-btn.mode-english {
+    background: #0f766e;
+    border-color: #0f766e;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(15, 118, 110, 0.35);
+}
+
+.subtitle-display-mode-btn.mode-chinese {
+    background: #b45309;
+    border-color: #b45309;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(180, 83, 9, 0.35);
+}
+
+.subtitle-display-mode-btn.mode-hidden {
+    background: #1f2937;
+    border-color: #1f2937;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(31, 41, 55, 0.4);
+}
+
+.subtitle-display-mode-label {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    line-height: 1;
+}
+
+.subtitle-list.subtitle-text-hidden .subtitle-text {
+    display: none;
+}
+
 .control-group {
     display: flex;
     align-items: center;
@@ -2004,6 +2069,13 @@ body.layout-resizing * {
         width: 36px;
         height: 36px;
     }
+
+    .subtitle-display-mode-btn {
+        bottom: 12px;
+        right: 56px;
+        width: 36px;
+        height: 36px;
+    }
     
     .help-btn svg {
         width: 18px;
@@ -2069,6 +2141,13 @@ body.layout-resizing * {
         height: 36px;
         bottom: 10px;
         right: 10px;
+    }
+
+    .subtitle-display-mode-btn {
+        width: 36px;
+        height: 36px;
+        bottom: 10px;
+        right: 54px;
     }
     
     .help-btn svg {

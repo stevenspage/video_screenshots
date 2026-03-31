@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>字幕双语图标预览</title>
+    <style>
+        :root {
+            --bg: #f3f4f6;
+            --card: #ffffff;
+            --line: #e5e7eb;
+            --text: #111827;
+            --muted: #4b5563;
+            --accent: #667eea;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 24px;
+        }
+
+        .desc {
+            margin: 0 0 20px;
+            color: var(--muted);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .name {
+            margin: 0 0 10px;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .note {
+            margin: 10px 0 0;
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.45;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid #e0e0e0;
+            background: #f8f9fa;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            color: var(--accent);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .icon-text {
+            font-weight: 700;
+            letter-spacing: .2px;
+            font-size: 13px;
+            line-height: 1;
+        }
+
+        .icon-text.small {
+            font-size: 12px;
+        }
+
+        .sim {
+            margin-top: 20px;
+            padding: 14px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: #fff;
+        }
+
+        .sim-title {
+            margin: 0 0 12px;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .sim-bar {
+            position: relative;
+            height: 70px;
+            border-radius: 10px;
+            background: #eef2ff;
+            border: 1px dashed #c7d2fe;
+        }
+
+        .sim-help {
+            position: absolute;
+            right: 16px;
+            bottom: 12px;
+        }
+
+        .sim-mode {
+            position: absolute;
+            right: 64px;
+            bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>默认双语图标方案预览</h1>
+    <p class="desc">下面都是“默认状态（双语）”可选图标。你选中一个，我可以直接替换到主页面。</p>
+
+    <section class="grid">
+        <article class="card">
+            <h2 class="name">A. A中（当前风格）</h2>
+            <button class="icon-btn" type="button" aria-label="A中">
+                <span class="icon-text">A中</span>
+            </button>
+            <p class="note">优点：识别快；和你当前版本一致。</p>
+        </article>
+
+        <article class="card">
+            <h2 class="name">B. EN|中</h2>
+            <button class="icon-btn" type="button" aria-label="EN和中">
+                <span class="icon-text small">EN|中</span>
+            </button>
+            <p class="note">优点：语义更明确，英文用户也容易理解。</p>
+        </article>
+
+        <article class="card">
+            <h2 class="name">C. 文A</h2>
+            <button class="icon-btn" type="button" aria-label="文A">
+                <span class="icon-text">文A</span>
+            </button>
+            <p class="note">优点：更像“语言”而不是“字幕文件”。</p>
+        </article>
+
+        <article class="card">
+            <h2 class="name">D. 双列字幕</h2>
+            <button class="icon-btn" type="button" aria-label="双列字幕">
+                <svg viewBox="0 0 24 24">
+                    <path d="M4 7h6M4 12h6M4 17h6"></path>
+                    <path d="M14 7h6M14 12h6M14 17h6"></path>
+                    <path d="M12 5v14"></path>
+                </svg>
+            </button>
+            <p class="note">优点：纯图形语义，视觉简洁。</p>
+        </article>
+
+        <article class="card">
+            <h2 class="name">E. 对话框 + A中</h2>
+            <button class="icon-btn" type="button" aria-label="对话框加双语">
+                <svg viewBox="0 0 24 24">
+                    <path d="M4 6h16v10H9l-5 4z"></path>
+                </svg>
+            </button>
+            <p class="note">优点：强调“字幕/台词”场景，和单句图标家族一致。</p>
+        </article>
+
+        <article class="card">
+            <h2 class="name">F. 地球 + 字幕</h2>
+            <button class="icon-btn" type="button" aria-label="全球语言">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="8"></circle>
+                    <path d="M4 12h16M12 4a13 13 0 0 0 0 16M12 4a13 13 0 0 1 0 16"></path>
+                </svg>
+            </button>
+            <p class="note">优点：通用“语言切换”认知强。</p>
+        </article>
+    </section>
+
+    <section class="sim">
+        <p class="sim-title">位置模拟（按钮在帮助按钮左侧）</p>
+        <div class="sim-bar">
+            <button class="icon-btn sim-mode" type="button" aria-label="模式按钮示意">
+                <span class="icon-text">A中</span>
+            </button>
+            <button class="icon-btn sim-help" type="button" aria-label="帮助按钮示意">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 18h.01M9.09 9a3 3 0 1 1 5.82 1c0 2-3 2-3 4"></path>
+                    <circle cx="12" cy="12" r="10"></circle>
+                </svg>
+            </button>
+        </div>
+    </section>
+</body>
+</html>
