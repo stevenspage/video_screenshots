@@ -1223,8 +1223,10 @@ function updateSinglePlayModeButton() {
         `;
     } else {
         singlePlayModeBtn.innerHTML = `
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="6 4 20 12 6 20 6 4"></polygon>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 6h16v10H9l-5 4z"></path>
+                <path d="M11 10h5M11 13h3"></path>
+                <path d="M6 3l1.2 2.3L9.5 6 7.2 7.2 6 9.5 4.8 7.2 2.5 6l2.3-1.2z"></path>
             </svg>
         `;
     }

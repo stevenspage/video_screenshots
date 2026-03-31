@@ -443,10 +443,10 @@ body.subtitle-mask-dragging * {
 }
 
 .single-play-floating-btn.mode-on {
-    background: #667eea;
-    border-color: #667eea;
+    background: #111827;
+    border-color: #111827;
     color: white;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 12px rgba(17, 24, 39, 0.45);
 }
 
 .single-play-floating-btn.mode-preview {

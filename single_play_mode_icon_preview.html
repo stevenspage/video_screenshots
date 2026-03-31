@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Single-Line Mode Icon Preview</title>
+    <style>
+        :root {
+            --bg: #f3f4f6;
+            --card: #ffffff;
+            --text: #111827;
+            --muted: #4b5563;
+            --line: #e5e7eb;
+            --off: #6b7280;
+            --play: #047857;
+            --seek: #b45309;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 24px;
+        }
+
+        p.top {
+            margin: 0 0 20px;
+            color: var(--muted);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .card h2 {
+            margin: 0 0 10px;
+            font-size: 15px;
+        }
+
+        .hint {
+            margin: 10px 0 0;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        .icon-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid #d1d5db;
+            background: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .18s ease;
+            cursor: default;
+        }
+
+        .icon-btn svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .off { color: var(--off); }
+        .play { color: var(--play); }
+        .seek { color: var(--seek); }
+
+        .state-map {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .state-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 12px;
+        }
+
+        .state-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 180px;
+        }
+
+        .tag {
+            font-size: 12px;
+            color: var(--muted);
+            width: 78px;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>单句模式图标样式预览</h1>
+    <p class="top">这是独立预览文件，不会影响当前页面。你可以先选一套，再集成到主界面。</p>
+
+    <div class="grid">
+        <article class="card">
+            <h2>1. 字幕 + 播放</h2>
+            <button class="icon-btn play" aria-label="字幕加播放">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 7h12M3 12h8M3 17h12"></path>
+                    <path d="M16 9l5 3-5 3z"></path>
+                </svg>
+            </button>
+            <p class="hint">最直观：点击字幕，播放这一句。</p>
+        </article>
+
+        <article class="card">
+            <h2>2. Repeat One</h2>
+            <button class="icon-btn play" aria-label="repeat one">
+                <svg viewBox="0 0 24 24">
+                    <path d="M4 7h12l-2-2M20 17H8l2 2"></path>
+                    <path d="M20 7v4M4 17v-4"></path>
+                    <path d="M12 9v6M12 9l-2 2M12 9l2 2"></path>
+                </svg>
+            </button>
+            <p class="hint">强调“仅一条”，偏功能化。</p>
+        </article>
+
+        <article class="card">
+            <h2>3. 靶心定位</h2>
+            <button class="icon-btn seek" aria-label="定位不播放">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="6"></circle>
+                    <circle cx="12" cy="12" r="2"></circle>
+                    <path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path>
+                </svg>
+            </button>
+            <p class="hint">适合“定位不播放”模式。</p>
+        </article>
+
+        <article class="card">
+            <h2>4. 引号 + 播放</h2>
+            <button class="icon-btn play" aria-label="一句台词播放">
+                <svg viewBox="0 0 24 24">
+                    <path d="M6 8h3l-2 4h2v4H5v-4l1-4zM13 8h3l-2 4h2v4h-4v-4l1-4z"></path>
+                    <path d="M18 10l4 2-4 2z"></path>
+                </svg>
+            </button>
+            <p class="hint">语义明确：一句台词。</p>
+        </article>
+
+        <article class="card">
+            <h2>5. 字幕气泡 + 触发</h2>
+            <button class="icon-btn play" aria-label="点击触发">
+                <svg viewBox="0 0 24 24">
+                    <path d="M4 6h16v10H9l-5 4z"></path>
+                    <path d="M11 10h5M11 13h3"></path>
+                    <path d="M6 3l1.2 2.3L9.5 6 7.2 7.2 6 9.5 4.8 7.2 2.5 6l2.3-1.2z"></path>
+                </svg>
+            </button>
+            <p class="hint">强调“点一句就执行”。</p>
+        </article>
+    </div>
+
+    <section class="state-map">
+        <strong>推荐三态映射（与你现在的交互一致）</strong>
+        <div class="state-row">
+            <div class="state-item">
+                <span class="tag">关闭 (OFF)</span>
+                <button class="icon-btn off" aria-label="关闭">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M3 7h18M3 12h18M3 17h12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="state-item">
+                <span class="tag">单句播放</span>
+                <button class="icon-btn play" aria-label="单句播放">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M3 7h12M3 12h8M3 17h12"></path>
+                        <path d="M16 9l5 3-5 3z"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="state-item">
+                <span class="tag">定位不播放</span>
+                <button class="icon-btn seek" aria-label="定位不播放">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="6"></circle>
+                        <circle cx="12" cy="12" r="2"></circle>
+                        <path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </section>
+</body>
+</html>
