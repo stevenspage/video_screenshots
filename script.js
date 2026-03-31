@@ -46,6 +46,16 @@ const MIN_VIDEO_WIDTH = 420;
 const MIN_SUBTITLE_FONT_SCALE = 1;
 const MAX_SUBTITLE_FONT_SCALE = 1.35;
 const LAYOUT_STORAGE_KEY = 'vib-player-subtitle-width';
+const HOUSE_OF_CARDS_KEYWORD = 'houseofcards';
+const HOUSE_OF_CARDS_SUBTITLE_ROOT = 'subs';
+const HOUSE_OF_CARDS_YEAR_BY_SEASON = {
+    1: '2013',
+    2: '2014',
+    3: '2015',
+    4: '2016',
+    5: '2017',
+    6: '2018'
+};
 
 let isLayoutResizing = false;
 let layoutDragStartX = 0;
@@ -148,7 +158,9 @@ subtitleInput.addEventListener('change', function(e) {
     }
 });
 
-function loadVideo(file) {
+function loadVideo(file, options = {}) {
+    const { skipAutoSubtitle = false } = options;
+
     if (!player) {
         initVideoPlayer();
     }
@@ -217,6 +229,10 @@ function loadVideo(file) {
         }
     });
     
+    if (!skipAutoSubtitle) {
+        void tryAutoLoadHouseOfCardsSubtitle(file);
+    }
+
     player.ready(function() {
         
     });
@@ -231,6 +247,83 @@ function getMimeType(file) {
     if (fileName.endsWith('.avi')) return 'video/x-msvideo';
     if (fileName.endsWith('.mov')) return 'video/quicktime';
     return file.type || 'video/mp4';
+}
+
+function normalizeAlphaNumeric(value) {
+    return (value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function parseSeasonEpisodeFromVideoName(videoName) {
+    const normalizedName = normalizeAlphaNumeric(videoName);
+    const match = normalizedName.match(/s(\d{1,2})e(\d{1,2})/);
+    if (!match) return null;
+
+    return {
+        season: parseInt(match[1], 10),
+        episode: parseInt(match[2], 10)
+    };
+}
+
+function buildHouseOfCardsSubtitleCandidates(season, episode) {
+    const seasonTag = `S${String(season).padStart(2, '0')}`;
+    const episodeTag = `E${String(episode).padStart(2, '0')}`;
+    const seasonEpisodeTag = `${seasonTag}${episodeTag}`;
+    const seasonDir = `${HOUSE_OF_CARDS_SUBTITLE_ROOT}/${seasonTag}`;
+    const mappedYear = HOUSE_OF_CARDS_YEAR_BY_SEASON[season];
+
+    const candidates = [];
+
+    if (mappedYear) {
+        candidates.push(`${seasonDir}/纸牌屋.House.Of.Cards.${mappedYear}.${seasonEpisodeTag}.srt`);
+        candidates.push(`${seasonDir}/House.Of.Cards.${mappedYear}.${seasonEpisodeTag}.srt`);
+        candidates.push(`${seasonDir}/house.of.cards.${mappedYear}.${seasonEpisodeTag}.srt`);
+    }
+
+    candidates.push(`${seasonDir}/纸牌屋.House.Of.Cards.${seasonEpisodeTag}.srt`);
+    candidates.push(`${seasonDir}/House.Of.Cards.${seasonEpisodeTag}.srt`);
+    candidates.push(`${seasonDir}/house.of.cards.${seasonEpisodeTag}.srt`);
+
+    return [...new Set(candidates)];
+}
+
+async function fetchSubtitleFileFromPath(path) {
+    const response = await fetch(path, { cache: 'no-store' });
+    if (!response.ok) return null;
+
+    const subtitleBlob = await response.blob();
+    const fileName = path.split('/').pop() || 'auto-subtitle.srt';
+    return new File([subtitleBlob], fileName, { type: 'application/x-subrip' });
+}
+
+async function tryAutoLoadHouseOfCardsSubtitle(file) {
+    if (!file || !file.name) return false;
+
+    const normalizedName = normalizeAlphaNumeric(file.name);
+    if (!normalizedName.includes(HOUSE_OF_CARDS_KEYWORD)) return false;
+
+    const seasonEpisode = parseSeasonEpisodeFromVideoName(file.name);
+    if (!seasonEpisode) return false;
+
+    const { season, episode } = seasonEpisode;
+    const candidates = buildHouseOfCardsSubtitleCandidates(season, episode);
+
+    for (const candidatePath of candidates) {
+        try {
+            const subtitleFile = await fetchSubtitleFileFromPath(candidatePath);
+            if (!subtitleFile) continue;
+
+            loadSubtitle(subtitleFile);
+            subtitleFileName.textContent = subtitleFile.name;
+            showStatus(`已自动加载字幕：${subtitleFile.name}`, 'success', 2000, true);
+            return true;
+        } catch (error) {
+        }
+    }
+
+    const seasonTag = String(season).padStart(2, '0');
+    const episodeTag = String(episode).padStart(2, '0');
+    showStatus(`未找到匹配字幕：S${seasonTag}E${episodeTag}，请手动选择`, 'info', 2500, true);
+    return false;
 }
 
 function loadSubtitle(file) {
@@ -735,12 +828,13 @@ videoSection.addEventListener('drop', function(e) {
         file.type.startsWith('video/') || 
         videoExtensions.some(ext => file.name.toLowerCase().endsWith(ext))
     );
+    const subtitleFile = files.find(file => file.name.toLowerCase().endsWith('.srt'));
+
     if (videoFile) {
-        loadVideo(videoFile);
+        loadVideo(videoFile, { skipAutoSubtitle: Boolean(subtitleFile) });
         videoFileName.textContent = videoFile.name;
     }
     
-    const subtitleFile = files.find(file => file.name.endsWith('.srt'));
     if (subtitleFile) {
         loadSubtitle(subtitleFile);
         subtitleFileName.textContent = subtitleFile.name;
