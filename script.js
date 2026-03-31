@@ -131,6 +131,7 @@ function initVideoPlayer() {
         if (overlay) {
             overlay.classList.remove('show');
         }
+        syncSubtitleMaskHandleVisibility();
     });
 
     player.on('pause', function() {
@@ -138,10 +139,19 @@ function initVideoPlayer() {
         if (overlay && player && player.readyState() >= 2) {
             overlay.classList.add('show');
         }
+        syncSubtitleMaskHandleVisibility();
     });
 
     player.on('fullscreenchange', function() {
         scheduleSubtitleMaskSync();
+    });
+
+    player.on('useractive', function() {
+        syncSubtitleMaskHandleVisibility();
+    });
+
+    player.on('userinactive', function() {
+        syncSubtitleMaskHandleVisibility();
     });
 
     updateSinglePlayModeButton();
@@ -764,6 +774,12 @@ function clearSubtitleMaskHandleTempState() {
 function showSubtitleMaskHandleTemporarily(durationMs = SUBTITLE_MASK_HANDLE_AUTO_HIDE_MS) {
     if (!subtitleMaskOverlay || !isSubtitleMaskEnabled) return;
 
+    if (isMobileSubtitleMaskHandleMode()) {
+        clearSubtitleMaskHandleTempState();
+        syncSubtitleMaskHandleVisibility();
+        return;
+    }
+
     if (subtitleMaskHandleHideTimer) {
         window.clearTimeout(subtitleMaskHandleHideTimer);
     }
@@ -775,6 +791,70 @@ function showSubtitleMaskHandleTemporarily(durationMs = SUBTITLE_MASK_HANDLE_AUT
             subtitleMaskOverlay.classList.remove('show-handle-temp');
         }
     }, durationMs);
+}
+
+function isMobileSubtitleMaskHandleMode() {
+    return window.matchMedia('(hover: none), (pointer: coarse)').matches;
+}
+
+function getSubtitleMaskControlBar() {
+    const container = getSubtitleMaskContainer();
+
+    let controlBar = container ? container.querySelector('.vjs-control-bar') : null;
+    if (!controlBar && player && typeof player.el === 'function') {
+        const playerElement = player.el();
+        if (playerElement) {
+            controlBar = playerElement.querySelector('.vjs-control-bar');
+        }
+    }
+
+    return controlBar;
+}
+
+function isSubtitleMaskControlBarVisible() {
+    const playerElement = player && typeof player.el === 'function' ? player.el() : null;
+    if (playerElement) {
+        const isPlaying = playerElement.classList.contains('vjs-playing');
+        const isInactive = playerElement.classList.contains('vjs-user-inactive');
+        if (isPlaying && isInactive) {
+            return false;
+        }
+    }
+
+    if (player) {
+        if (typeof player.paused === 'function' && player.paused()) {
+            return true;
+        }
+        if (typeof player.userActive === 'function' && player.userActive()) {
+            return true;
+        }
+    }
+
+    const controlBar = getSubtitleMaskControlBar();
+    if (!controlBar) return false;
+
+    const computed = window.getComputedStyle(controlBar);
+    if (
+        computed.display === 'none' ||
+        computed.visibility === 'hidden' ||
+        Number.parseFloat(computed.opacity || '1') < 0.05
+    ) {
+        return false;
+    }
+
+    const rect = controlBar.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+}
+
+function syncSubtitleMaskHandleVisibility() {
+    if (!subtitleMaskOverlay) return;
+
+    const shouldShowMobileHandle =
+        isSubtitleMaskEnabled &&
+        isMobileSubtitleMaskHandleMode() &&
+        (isSubtitleMaskDragging || isSubtitleMaskControlBarVisible());
+
+    subtitleMaskOverlay.classList.toggle('mobile-handle-visible', shouldShowMobileHandle);
 }
 
 function updateSubtitleMaskButton() {
@@ -806,16 +886,7 @@ function updateSubtitleMaskButton() {
 }
 
 function getSubtitleMaskSafeBottomOffset() {
-    const container = getSubtitleMaskContainer();
-    if (!container) return 48;
-
-    let controlBar = container.querySelector('.vjs-control-bar');
-    if (!controlBar && player && typeof player.el === 'function') {
-        const playerElement = player.el();
-        if (playerElement) {
-            controlBar = playerElement.querySelector('.vjs-control-bar');
-        }
-    }
+    const controlBar = getSubtitleMaskControlBar();
     if (!controlBar) return 48;
 
     const computed = window.getComputedStyle(controlBar);
@@ -845,6 +916,7 @@ function applySubtitleMaskState() {
 
     subtitleMaskOverlay.classList.toggle('enabled', isSubtitleMaskEnabled);
     subtitleMaskOverlay.classList.toggle('dragging', isSubtitleMaskDragging);
+    syncSubtitleMaskHandleVisibility();
 }
 
 function setSubtitleMaskPercentByPointerY(pointerY) {

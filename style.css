@@ -221,7 +221,8 @@ body {
     transition: none;
 }
 
-.subtitle-mask-handle {
+.subtitle-mask-handle,
+.video-js .subtitle-mask-handle {
     position: absolute;
     top: 0;
     left: 50%;
@@ -238,11 +239,19 @@ body {
     cursor: ns-resize;
     pointer-events: none;
     padding: 0;
+    margin: 0;
     opacity: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: none;
+    box-shadow: none;
+    outline: none;
+    font: inherit;
     transition: opacity 0.2s, transform 0.2s, background 0.2s, border-color 0.2s;
 }
 
-.subtitle-mask-handle:hover {
+.subtitle-mask-handle:hover,
+.video-js .subtitle-mask-handle:hover {
     background: rgba(30, 41, 59, 0.95);
     border-color: rgba(255, 255, 255, 0.7);
 }
@@ -250,10 +259,23 @@ body {
 .subtitle-mask-overlay.enabled:hover .subtitle-mask-handle,
 .subtitle-mask-overlay.dragging .subtitle-mask-handle,
 .subtitle-mask-overlay.show-handle-temp .subtitle-mask-handle,
+.subtitle-mask-overlay.mobile-handle-visible .subtitle-mask-handle,
+.video-js .subtitle-mask-overlay.enabled:hover .subtitle-mask-handle,
+.video-js .subtitle-mask-overlay.dragging .subtitle-mask-handle,
+.video-js .subtitle-mask-overlay.show-handle-temp .subtitle-mask-handle,
+.video-js .subtitle-mask-overlay.mobile-handle-visible .subtitle-mask-handle,
 .subtitle-mask-handle:focus-visible {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
     pointer-events: auto;
+}
+
+@media (hover: none), (pointer: coarse) {
+    .video-js.vjs-user-inactive.vjs-playing .subtitle-mask-overlay.mobile-handle-visible .subtitle-mask-handle {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.88);
+        pointer-events: none;
+    }
 }
 
 .subtitle-mask-handle-bar {
