@@ -16,6 +16,7 @@ const generateScreenshotsBtn = document.getElementById('generateScreenshots');
 const repeatPlayBtn = document.getElementById('repeatPlay');
 const repeatPlayText = document.getElementById('repeatPlayText');
 const repeatPlayIcon = document.getElementById('repeatPlayIcon');
+const singlePlayModeBtn = document.getElementById('singlePlayModeBtn');
 const selectedCountSpan = document.getElementById('selectedCount');
 const subtitleToolbar = document.querySelector('.subtitle-toolbar');
 const appContainer = document.querySelector('.container');
@@ -31,6 +32,10 @@ let lastCheckedIndex = -1;
 let isRepeating = false;
 let repeatInterval = null;
 let repeatTimeUpdateHandler = null;
+let isSingleLineModeEnabled = false;
+let isSingleLinePlaying = false;
+let singleLineTimeUpdateHandler = null;
+let statusHideTimer = null;
 
 const DEFAULT_SUBTITLE_WIDTH = 400;
 const MIN_SUBTITLE_WIDTH = 280;
@@ -102,6 +107,8 @@ function initVideoPlayer() {
         }
     });
 
+    updateSinglePlayModeButton();
+
     return player;
 }
 
@@ -145,6 +152,9 @@ function loadVideo(file) {
     
     if (isRepeating) {
         stopRepeatPlay();
+    }
+    if (isSingleLinePlaying) {
+        stopSingleLinePlay(false);
     }
     
     manualScreenshots = [];
@@ -363,7 +373,11 @@ function formatTime(seconds) {
 function displaySubtitles() {
     subtitleList.innerHTML = '';
     subtitleCount.textContent = `${subtitles.length} 条字幕`;
-    
+    if (isSingleLinePlaying) {
+        stopSingleLinePlay(false);
+    }
+    currentSubtitleIndex = -1;
+
     subtitles.forEach((subtitle, index) => {
         const item = document.createElement('div');
         item.className = 'subtitle-item';
@@ -397,7 +411,14 @@ function displaySubtitles() {
         item.appendChild(contentDiv);
         
         contentDiv.addEventListener('click', function() {
-            if (player) {
+            currentSubtitleIndex = index;
+            updateSubtitleHighlight();
+
+            if (!player) return;
+
+            if (isSingleLineModeEnabled) {
+                playSingleLineByIndex(index);
+            } else {
                 player.currentTime(subtitle.startTime);
                 player.play();
             }
@@ -418,6 +439,7 @@ function displaySubtitles() {
     
     selectAllCheckbox.checked = false;
     updateSelectedCount();
+    updateSinglePlayModeButton();
 }
 
 function updateCurrentSubtitle(currentTime) {
@@ -469,14 +491,22 @@ function updateSubtitleHighlight() {
     });
 }
 
-function showStatus(message, type) {
+function showStatus(message, type, durationMs = null, asToast = false) {
+    if (statusHideTimer) {
+        clearTimeout(statusHideTimer);
+        statusHideTimer = null;
+    }
+
     subtitleStatus.textContent = message;
-    subtitleStatus.className = `subtitle-status ${type}`;
-    
-    if (type === 'success') {
-        setTimeout(() => {
+    subtitleStatus.className = `subtitle-status ${type}${asToast ? ' toast' : ''}`;
+    subtitleStatus.style.display = '';
+
+    const timeout = durationMs !== null ? durationMs : (type === 'success' ? 3000 : 0);
+    if (timeout > 0) {
+        statusHideTimer = setTimeout(() => {
             subtitleStatus.style.display = 'none';
-        }, 3000);
+            statusHideTimer = null;
+        }, timeout);
     }
 }
 
@@ -805,6 +835,51 @@ function handleCheckboxClick(e, currentIndex) {
     lastCheckedIndex = currentIndex;
 }
 
+function updateSinglePlayModeButton() {
+    if (!singlePlayModeBtn) return;
+
+    singlePlayModeBtn.classList.toggle('mode-on', isSingleLineModeEnabled);
+    singlePlayModeBtn.textContent = `单句模式：${isSingleLineModeEnabled ? '开' : '关'}`;
+}
+
+function stopSingleLinePlay(shouldPause = true) {
+    if (player && singleLineTimeUpdateHandler) {
+        player.off('timeupdate', singleLineTimeUpdateHandler);
+        singleLineTimeUpdateHandler = null;
+    }
+
+    if (shouldPause && player && !player.paused()) {
+        player.pause();
+    }
+
+    isSingleLinePlaying = false;
+}
+
+function playSingleLineByIndex(index) {
+    if (!player) return;
+    const subtitle = subtitles[index];
+    if (!subtitle) return;
+
+    if (isRepeating) {
+        stopRepeatPlay();
+    }
+
+    stopSingleLinePlay(false);
+    isSingleLinePlaying = true;
+
+    player.currentTime(subtitle.startTime);
+    player.play();
+
+    singleLineTimeUpdateHandler = function() {
+        if (!isSingleLinePlaying || !isSingleLineModeEnabled) return;
+        if (player.currentTime() >= subtitle.endTime) {
+            stopSingleLinePlay(true);
+        }
+    };
+
+    player.on('timeupdate', singleLineTimeUpdateHandler);
+}
+
 function updateSelectedCount() {
     const checkboxes = document.querySelectorAll('.subtitle-item-checkbox');
     const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
@@ -833,10 +908,38 @@ function updateSelectedCount() {
     }
 }
 
+if (singlePlayModeBtn) {
+    singlePlayModeBtn.addEventListener('click', function() {
+        isSingleLineModeEnabled = !isSingleLineModeEnabled;
+
+        if (isSingleLineModeEnabled) {
+            if (isRepeating) {
+                stopRepeatPlay();
+            }
+            showStatus('单句播放模式已开启：点击字幕仅播放该句', 'info', 2000, true);
+            updateSinglePlayModeButton();
+            return;
+            showStatus('单句播放模式已开启：点击字幕仅播放该句', 'info');
+        } else {
+            stopSingleLinePlay(false);
+            showStatus('单句播放模式已关闭：恢复正常播放', 'info', 2000, true);
+            updateSinglePlayModeButton();
+            return;
+            showStatus('单句播放模式已关闭：恢复正常播放', 'info');
+        }
+
+        updateSinglePlayModeButton();
+    });
+}
+
 repeatPlayBtn.addEventListener('click', function() {
     if (!player) {
         alert('请先加载视频');
         return;
+    }
+
+    if (isSingleLinePlaying) {
+        stopSingleLinePlay(true);
     }
     
     if (isRepeating) {
@@ -845,7 +948,6 @@ repeatPlayBtn.addEventListener('click', function() {
         startRepeatPlay();
     }
 });
-
 function isConsecutive(indices) {
     if (indices.length <= 1) return true;
     

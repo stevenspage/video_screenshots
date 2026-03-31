@@ -343,6 +343,47 @@ body {
     gap: 16px;
 }
 
+.single-play-controls {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.single-play-mode-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: #ffffff;
+    color: #666;
+    border: 1px solid #d8d8d8;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.single-play-mode-btn:hover {
+    background: #f8f9fa;
+    border-color: #c8c8c8;
+    color: #333;
+}
+
+.single-play-mode-btn.mode-on {
+    background: #ecfdf5;
+    border-color: #86efac;
+    color: #166534;
+}
+
+.single-play-tip {
+    font-size: 12px;
+    color: #8a8a8a;
+}
+
 .control-group {
     display: flex;
     align-items: center;
@@ -417,6 +458,17 @@ input[type="file"] {
     background: #d1ecf1;
     color: #0c5460;
     border: 1px solid #bee5eb;
+}
+
+.subtitle-status.toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    margin-top: 0;
+    width: min(560px, calc(100vw - 32px));
+    z-index: 1200;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.2);
 }
 
 .subtitle-section {
@@ -1469,6 +1521,20 @@ body.layout-resizing * {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+    }
+
+    .single-play-controls {
+        margin-top: 10px;
+        gap: 8px;
+    }
+
+    .single-play-mode-btn {
+        padding: 7px 12px;
+        font-size: 12px;
+    }
+
+    .single-play-tip {
+        font-size: 11px;
     }
     
     .subtitle-search {
