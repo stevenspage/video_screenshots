@@ -59,6 +59,7 @@ let subtitleMaskPercent = DEFAULT_SUBTITLE_MASK_PERCENT;
 let subtitleMaskBaseParent = null;
 let subtitleMaskHandleHideTimer = null;
 let subtitleMaskSyncSequence = 0;
+let isMobileDetachedControlBarActive = false;
 
 const DEFAULT_SUBTITLE_WIDTH = 400;
 const MIN_SUBTITLE_WIDTH = 280;
@@ -143,7 +144,10 @@ function initVideoPlayer() {
     });
 
     player.on('fullscreenchange', function() {
-        scheduleSubtitleMaskSync();
+        syncMobileDetachedControlBarLayout();
+        if (isMobileSubtitleMaskHandleMode()) {
+            showSubtitleMaskHandleTemporarily();
+        }
     });
 
     player.on('useractive', function() {
@@ -155,7 +159,9 @@ function initVideoPlayer() {
     });
 
     updateSinglePlayModeButton();
-    scheduleSubtitleMaskSync();
+    syncMobileDetachedControlBarLayout();
+
+    window.addEventListener('resize', syncMobileDetachedControlBarLayout);
 
     return player;
 }
@@ -774,12 +780,6 @@ function clearSubtitleMaskHandleTempState() {
 function showSubtitleMaskHandleTemporarily(durationMs = SUBTITLE_MASK_HANDLE_AUTO_HIDE_MS) {
     if (!subtitleMaskOverlay || !isSubtitleMaskEnabled) return;
 
-    if (isMobileSubtitleMaskHandleMode()) {
-        clearSubtitleMaskHandleTempState();
-        syncSubtitleMaskHandleVisibility();
-        return;
-    }
-
     if (subtitleMaskHandleHideTimer) {
         window.clearTimeout(subtitleMaskHandleHideTimer);
     }
@@ -795,6 +795,32 @@ function showSubtitleMaskHandleTemporarily(durationMs = SUBTITLE_MASK_HANDLE_AUT
 
 function isMobileSubtitleMaskHandleMode() {
     return window.matchMedia('(hover: none), (pointer: coarse)').matches;
+}
+
+function shouldDetachMobileControlBar() {
+    if (!isMobileSubtitleMaskHandleMode()) return false;
+    if (!player || typeof player.isFullscreen !== 'function') return true;
+    return !player.isFullscreen();
+}
+
+function syncMobileDetachedControlBarLayout() {
+    if (!videoWrapper) return;
+
+    const shouldDetach = shouldDetachMobileControlBar();
+    const controlBar = getSubtitleMaskControlBar();
+    const controlBarHeight = controlBar
+        ? Math.max(40, Math.ceil(controlBar.getBoundingClientRect().height))
+        : 48;
+
+    videoWrapper.style.setProperty('--mobile-detached-control-bar-height', `${controlBarHeight}px`);
+    videoWrapper.classList.toggle('mobile-detached-controls', shouldDetach);
+
+    if (player && typeof player.fluid === 'function' && isMobileDetachedControlBarActive !== shouldDetach) {
+        player.fluid(!shouldDetach);
+        isMobileDetachedControlBarActive = shouldDetach;
+    }
+
+    scheduleSubtitleMaskSync();
 }
 
 function getSubtitleMaskControlBar() {
@@ -848,13 +874,7 @@ function isSubtitleMaskControlBarVisible() {
 
 function syncSubtitleMaskHandleVisibility() {
     if (!subtitleMaskOverlay) return;
-
-    const shouldShowMobileHandle =
-        isSubtitleMaskEnabled &&
-        isMobileSubtitleMaskHandleMode() &&
-        (isSubtitleMaskDragging || isSubtitleMaskControlBarVisible());
-
-    subtitleMaskOverlay.classList.toggle('mobile-handle-visible', shouldShowMobileHandle);
+    subtitleMaskOverlay.classList.remove('mobile-handle-visible');
 }
 
 function updateSubtitleMaskButton() {
@@ -972,6 +992,11 @@ function initSubtitleMaskControls() {
         subtitleMaskBaseParent = subtitleMaskOverlay.parentElement || videoWrapper;
     }
 
+    const triggerMobileSubtitleMaskHandleHint = function() {
+        if (!isMobileSubtitleMaskHandleMode()) return;
+        showSubtitleMaskHandleTemporarily();
+    };
+
     updateSubtitleMaskButton();
     scheduleSubtitleMaskSync();
 
@@ -1002,6 +1027,22 @@ function initSubtitleMaskControls() {
     if (subtitleMaskHandle) {
         subtitleMaskHandle.addEventListener('mousedown', startSubtitleMaskDrag);
         subtitleMaskHandle.addEventListener('touchstart', startSubtitleMaskDrag, { passive: false });
+    }
+
+    if (subtitleMaskOverlay) {
+        subtitleMaskOverlay.addEventListener('touchstart', triggerMobileSubtitleMaskHandleHint, { passive: true });
+    }
+
+    if (videoWrapper) {
+        videoWrapper.addEventListener('touchstart', function(event) {
+            if (subtitleMaskOverlay && subtitleMaskOverlay.contains(event.target)) {
+                return;
+            }
+            if (event.target instanceof Element && event.target.closest('.vjs-control-bar')) {
+                return;
+            }
+            triggerMobileSubtitleMaskHandleHint();
+        }, { passive: true });
     }
 
     document.addEventListener('mousemove', moveSubtitleMaskDrag);
