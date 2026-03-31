@@ -343,45 +343,45 @@ body {
     gap: 16px;
 }
 
-.single-play-controls {
-    margin-top: 14px;
+.single-play-floating-btn {
+    position: absolute;
+    bottom: 64px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.single-play-mode-btn {
-    display: inline-flex;
-    align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 8px 14px;
-    background: #ffffff;
-    color: #666;
-    border: 1px solid #d8d8d8;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
+    color: #667eea;
+    z-index: 10;
+    transition: all 0.3s;
 }
 
-.single-play-mode-btn:hover {
-    background: #f8f9fa;
-    border-color: #c8c8c8;
-    color: #333;
+.single-play-floating-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
 }
 
-.single-play-mode-btn.mode-on {
-    background: #ecfdf5;
-    border-color: #86efac;
-    color: #166534;
+.single-play-floating-btn.mode-on {
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
-.single-play-tip {
-    font-size: 12px;
-    color: #8a8a8a;
+.single-play-floating-btn.mode-preview {
+    background: #f97316;
+    border-color: #f97316;
+    color: white;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.35);
 }
 
 .control-group {
@@ -1523,20 +1523,6 @@ body.layout-resizing * {
         white-space: nowrap;
     }
 
-    .single-play-controls {
-        margin-top: 10px;
-        gap: 8px;
-    }
-
-    .single-play-mode-btn {
-        padding: 7px 12px;
-        font-size: 12px;
-    }
-
-    .single-play-tip {
-        font-size: 11px;
-    }
-    
     .subtitle-search {
         padding: 4px 12px 0px 12px;
         border-bottom: none;
@@ -1892,6 +1878,13 @@ body.layout-resizing * {
 
 /* 移动端适配 */
 @media (max-width: 1024px) {
+    .single-play-floating-btn {
+        bottom: 56px;
+        right: 12px;
+        width: 36px;
+        height: 36px;
+    }
+
     .help-btn {
         bottom: 12px;
         right: 12px;
@@ -1944,6 +1937,13 @@ body.layout-resizing * {
 }
 
 @media (max-width: 640px) {
+    .single-play-floating-btn {
+        width: 36px;
+        height: 36px;
+        bottom: 54px;
+        right: 10px;
+    }
+
     .help-btn {
         width: 36px;
         height: 36px;

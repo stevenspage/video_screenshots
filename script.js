@@ -32,7 +32,10 @@ let lastCheckedIndex = -1;
 let isRepeating = false;
 let repeatInterval = null;
 let repeatTimeUpdateHandler = null;
-let isSingleLineModeEnabled = false;
+const SINGLE_LINE_MODE_OFF = 0;
+const SINGLE_LINE_MODE_PLAY = 1;
+const SINGLE_LINE_MODE_PREVIEW = 2;
+let singleLineModeState = SINGLE_LINE_MODE_OFF;
 let isSingleLinePlaying = false;
 let singleLineTimeUpdateHandler = null;
 let statusHideTimer = null;
@@ -55,7 +58,7 @@ function initVideoPlayer() {
         fluid: true,
         preload: 'auto',
         language: 'zh-CN',
-        playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 2],
+        playbackRates: [0.3, 0.5, 0.75, 1, 1.25, 1.5],
         controlBar: {
             children: [
                 'playToggle',
@@ -416,8 +419,11 @@ function displaySubtitles() {
 
             if (!player) return;
 
-            if (isSingleLineModeEnabled) {
+            if (singleLineModeState === SINGLE_LINE_MODE_PLAY) {
                 playSingleLineByIndex(index);
+            } else if (singleLineModeState === SINGLE_LINE_MODE_PREVIEW) {
+                stopSingleLinePlay(true);
+                player.currentTime(subtitle.startTime);
             } else {
                 player.currentTime(subtitle.startTime);
                 player.play();
@@ -446,7 +452,11 @@ function updateCurrentSubtitle(currentTime) {
     
     let newIndex = -1;
     for (let i = 0; i < subtitles.length; i++) {
-        if (currentTime >= subtitles[i].startTime && currentTime <= subtitles[i].endTime) {
+        const isLastSubtitle = i === subtitles.length - 1;
+        const inRange = currentTime >= subtitles[i].startTime &&
+            (currentTime < subtitles[i].endTime || (isLastSubtitle && currentTime <= subtitles[i].endTime));
+
+        if (inRange) {
             newIndex = i;
             break;
         }
@@ -838,10 +848,34 @@ function handleCheckboxClick(e, currentIndex) {
 function updateSinglePlayModeButton() {
     if (!singlePlayModeBtn) return;
 
-    singlePlayModeBtn.classList.toggle('mode-on', isSingleLineModeEnabled);
-    singlePlayModeBtn.textContent = `单句模式：${isSingleLineModeEnabled ? '开' : '关'}`;
-}
+    const isPlayState = singleLineModeState === SINGLE_LINE_MODE_PLAY;
+    const isPreviewState = singleLineModeState === SINGLE_LINE_MODE_PREVIEW;
 
+    singlePlayModeBtn.classList.toggle('mode-on', isPlayState);
+    singlePlayModeBtn.classList.toggle('mode-preview', isPreviewState);
+
+    if (isPreviewState) {
+        singlePlayModeBtn.innerHTML = `
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="7" y="7" width="10" height="10" rx="1"></rect>
+            </svg>
+        `;
+    } else {
+        singlePlayModeBtn.innerHTML = `
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="6 4 20 12 6 20 6 4"></polygon>
+            </svg>
+        `;
+    }
+
+    const label = isPlayState
+        ? '单句播放（再次点击切换为单句定位）'
+        : isPreviewState
+            ? '单句定位（再次点击恢复正常模式）'
+            : '单句播放模式：关（点击开启单句播放）';
+    singlePlayModeBtn.title = label;
+    singlePlayModeBtn.setAttribute('aria-label', label);
+}
 function stopSingleLinePlay(shouldPause = true) {
     if (player && singleLineTimeUpdateHandler) {
         player.off('timeupdate', singleLineTimeUpdateHandler);
@@ -871,7 +905,7 @@ function playSingleLineByIndex(index) {
     player.play();
 
     singleLineTimeUpdateHandler = function() {
-        if (!isSingleLinePlaying || !isSingleLineModeEnabled) return;
+        if (!isSingleLinePlaying || singleLineModeState !== SINGLE_LINE_MODE_PLAY) return;
         if (player.currentTime() >= subtitle.endTime) {
             stopSingleLinePlay(true);
         }
@@ -910,28 +944,27 @@ function updateSelectedCount() {
 
 if (singlePlayModeBtn) {
     singlePlayModeBtn.addEventListener('click', function() {
-        isSingleLineModeEnabled = !isSingleLineModeEnabled;
+        singleLineModeState = (singleLineModeState + 1) % 3;
 
-        if (isSingleLineModeEnabled) {
+        if (singleLineModeState === SINGLE_LINE_MODE_PLAY) {
             if (isRepeating) {
                 stopRepeatPlay();
             }
             showStatus('单句播放模式已开启：点击字幕仅播放该句', 'info', 2000, true);
-            updateSinglePlayModeButton();
-            return;
-            showStatus('单句播放模式已开启：点击字幕仅播放该句', 'info');
+        } else if (singleLineModeState === SINGLE_LINE_MODE_PREVIEW) {
+            if (isRepeating) {
+                stopRepeatPlay();
+            }
+            stopSingleLinePlay(true);
+            showStatus('已切换到单句定位模式：点击字幕仅定位视频（不播放）', 'info', 2000, true);
         } else {
             stopSingleLinePlay(false);
-            showStatus('单句播放模式已关闭：恢复正常播放', 'info', 2000, true);
-            updateSinglePlayModeButton();
-            return;
-            showStatus('单句播放模式已关闭：恢复正常播放', 'info');
+            showStatus('已恢复正常播放模式', 'info', 2000, true);
         }
 
         updateSinglePlayModeButton();
     });
 }
-
 repeatPlayBtn.addEventListener('click', function() {
     if (!player) {
         alert('请先加载视频');
