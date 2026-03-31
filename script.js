@@ -17,10 +17,14 @@ const repeatPlayBtn = document.getElementById('repeatPlay');
 const repeatPlayText = document.getElementById('repeatPlayText');
 const repeatPlayIcon = document.getElementById('repeatPlayIcon');
 const singlePlayModeBtn = document.getElementById('singlePlayModeBtn');
+const subtitleMaskToggleBtn = document.getElementById('subtitleMaskToggleBtn');
+const subtitleMaskOverlay = document.getElementById('subtitleMaskOverlay');
+const subtitleMaskHandle = document.getElementById('subtitleMaskHandle');
 const selectedCountSpan = document.getElementById('selectedCount');
 const subtitleToolbar = document.querySelector('.subtitle-toolbar');
 const appContainer = document.querySelector('.container');
 const videoSection = document.querySelector('.video-section');
+const videoWrapper = document.querySelector('.video-wrapper');
 const subtitleSection = document.querySelector('.subtitle-section');
 const layoutResizer = document.getElementById('layoutResizer');
 
@@ -39,6 +43,16 @@ let singleLineModeState = SINGLE_LINE_MODE_OFF;
 let isSingleLinePlaying = false;
 let singleLineTimeUpdateHandler = null;
 let statusHideTimer = null;
+const DEFAULT_SUBTITLE_MASK_PERCENT = 10;
+const MIN_SUBTITLE_MASK_PERCENT = 0;
+const MAX_SUBTITLE_MASK_PERCENT = 60;
+const SUBTITLE_MASK_HANDLE_AUTO_HIDE_MS = 3000;
+let isSubtitleMaskEnabled = false;
+let isSubtitleMaskDragging = false;
+let subtitleMaskPercent = DEFAULT_SUBTITLE_MASK_PERCENT;
+let subtitleMaskBaseParent = null;
+let subtitleMaskHandleHideTimer = null;
+let subtitleMaskSyncSequence = 0;
 
 const DEFAULT_SUBTITLE_WIDTH = 400;
 const MIN_SUBTITLE_WIDTH = 280;
@@ -120,7 +134,12 @@ function initVideoPlayer() {
         }
     });
 
+    player.on('fullscreenchange', function() {
+        scheduleSubtitleMaskSync();
+    });
+
     updateSinglePlayModeButton();
+    scheduleSubtitleMaskSync();
 
     return player;
 }
@@ -611,6 +630,254 @@ function showStatus(message, type, durationMs = null, asToast = false) {
             statusHideTimer = null;
         }, timeout);
     }
+}
+
+function getSubtitleMaskPointerY(event) {
+    if (event.touches && event.touches[0]) {
+        return event.touches[0].clientY;
+    }
+    if (event.changedTouches && event.changedTouches[0]) {
+        return event.changedTouches[0].clientY;
+    }
+    if (typeof event.clientY === 'number') {
+        return event.clientY;
+    }
+    return null;
+}
+
+function getSubtitleMaskContainer() {
+    if (subtitleMaskOverlay && subtitleMaskOverlay.parentElement) {
+        return subtitleMaskOverlay.parentElement;
+    }
+    return videoWrapper;
+}
+
+function syncSubtitleMaskContainer() {
+    if (!subtitleMaskOverlay) return;
+
+    if (!subtitleMaskBaseParent) {
+        subtitleMaskBaseParent = subtitleMaskOverlay.parentElement || videoWrapper;
+    }
+
+    let targetContainer = subtitleMaskBaseParent;
+    if (player && typeof player.isFullscreen === 'function' && player.isFullscreen()) {
+        const playerElement = typeof player.el === 'function' ? player.el() : null;
+        if (playerElement) {
+            targetContainer = playerElement;
+        }
+    }
+
+    if (targetContainer && subtitleMaskOverlay.parentElement !== targetContainer) {
+        targetContainer.appendChild(subtitleMaskOverlay);
+    }
+
+    applySubtitleMaskState();
+}
+
+function scheduleSubtitleMaskSync() {
+    const sequence = ++subtitleMaskSyncSequence;
+    const runIfCurrent = function() {
+        if (sequence !== subtitleMaskSyncSequence) return;
+        syncSubtitleMaskContainer();
+    };
+
+    runIfCurrent();
+    window.requestAnimationFrame(runIfCurrent);
+    window.setTimeout(runIfCurrent, 120);
+    window.setTimeout(runIfCurrent, 320);
+}
+
+function clearSubtitleMaskHandleTempState() {
+    if (subtitleMaskHandleHideTimer) {
+        window.clearTimeout(subtitleMaskHandleHideTimer);
+        subtitleMaskHandleHideTimer = null;
+    }
+    if (subtitleMaskOverlay) {
+        subtitleMaskOverlay.classList.remove('show-handle-temp');
+    }
+}
+
+function showSubtitleMaskHandleTemporarily(durationMs = SUBTITLE_MASK_HANDLE_AUTO_HIDE_MS) {
+    if (!subtitleMaskOverlay || !isSubtitleMaskEnabled) return;
+
+    if (subtitleMaskHandleHideTimer) {
+        window.clearTimeout(subtitleMaskHandleHideTimer);
+    }
+
+    subtitleMaskOverlay.classList.add('show-handle-temp');
+    subtitleMaskHandleHideTimer = window.setTimeout(function() {
+        subtitleMaskHandleHideTimer = null;
+        if (subtitleMaskOverlay) {
+            subtitleMaskOverlay.classList.remove('show-handle-temp');
+        }
+    }, durationMs);
+}
+
+function updateSubtitleMaskButton() {
+    if (!subtitleMaskToggleBtn) return;
+
+    subtitleMaskToggleBtn.classList.toggle('mode-on', isSubtitleMaskEnabled);
+
+    if (isSubtitleMaskEnabled) {
+        subtitleMaskToggleBtn.innerHTML = `
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 12s3.5-5.5 10-5.5S22 12 22 12s-3.5 5.5-10 5.5S2 12 2 12z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+        `;
+    } else {
+        subtitleMaskToggleBtn.innerHTML = `
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 12s3.5-5.5 10-5.5S22 12 22 12s-3.5 5.5-10 5.5S2 12 2 12z"></path>
+                <path d="M4 20L20 4"></path>
+            </svg>
+        `;
+    }
+
+    const label = isSubtitleMaskEnabled
+        ? '台词遮罩：开（拖拽视频底部边缘调整高度）'
+        : '台词遮罩：关（点击开启）';
+    subtitleMaskToggleBtn.title = label;
+    subtitleMaskToggleBtn.setAttribute('aria-label', label);
+}
+
+function getSubtitleMaskSafeBottomOffset() {
+    const container = getSubtitleMaskContainer();
+    if (!container) return 48;
+
+    let controlBar = container.querySelector('.vjs-control-bar');
+    if (!controlBar && player && typeof player.el === 'function') {
+        const playerElement = player.el();
+        if (playerElement) {
+            controlBar = playerElement.querySelector('.vjs-control-bar');
+        }
+    }
+    if (!controlBar) return 48;
+
+    const computed = window.getComputedStyle(controlBar);
+    if (computed.display === 'none' || computed.visibility === 'hidden') {
+        return 48;
+    }
+
+    const height = controlBar.getBoundingClientRect().height;
+    return Math.max(36, Math.ceil(height));
+}
+
+function applySubtitleMaskState() {
+    if (!subtitleMaskOverlay) return;
+
+    const safeBottom = getSubtitleMaskSafeBottomOffset();
+    subtitleMaskOverlay.style.bottom = `${safeBottom}px`;
+
+    const container = getSubtitleMaskContainer();
+    if (container) {
+        const rect = container.getBoundingClientRect();
+        const availableHeight = Math.max(0, rect.height - safeBottom);
+        const maskHeightPx = availableHeight * (subtitleMaskPercent / 100);
+        subtitleMaskOverlay.style.height = `${maskHeightPx.toFixed(1)}px`;
+    } else {
+        subtitleMaskOverlay.style.height = `${subtitleMaskPercent.toFixed(2)}%`;
+    }
+
+    subtitleMaskOverlay.classList.toggle('enabled', isSubtitleMaskEnabled);
+    subtitleMaskOverlay.classList.toggle('dragging', isSubtitleMaskDragging);
+}
+
+function setSubtitleMaskPercentByPointerY(pointerY) {
+    const container = getSubtitleMaskContainer();
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    if (!rect.height) return;
+
+    const safeBottom = getSubtitleMaskSafeBottomOffset();
+    const maxMaskBottomY = rect.bottom - safeBottom;
+    const availableHeight = maxMaskBottomY - rect.top;
+    if (availableHeight <= 0) return;
+
+    const clampedY = clamp(pointerY, rect.top, maxMaskBottomY);
+    const nextPercent = ((maxMaskBottomY - clampedY) / availableHeight) * 100;
+    subtitleMaskPercent = clamp(nextPercent, MIN_SUBTITLE_MASK_PERCENT, MAX_SUBTITLE_MASK_PERCENT);
+    applySubtitleMaskState();
+}
+
+function startSubtitleMaskDrag(event) {
+    if (!isSubtitleMaskEnabled) return;
+    const pointerY = getSubtitleMaskPointerY(event);
+    if (pointerY === null) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    isSubtitleMaskDragging = true;
+    document.body.classList.add('subtitle-mask-dragging');
+    setSubtitleMaskPercentByPointerY(pointerY);
+    applySubtitleMaskState();
+}
+
+function moveSubtitleMaskDrag(event) {
+    if (!isSubtitleMaskDragging) return;
+    const pointerY = getSubtitleMaskPointerY(event);
+    if (pointerY === null) return;
+
+    event.preventDefault();
+    setSubtitleMaskPercentByPointerY(pointerY);
+}
+
+function endSubtitleMaskDrag() {
+    if (!isSubtitleMaskDragging) return;
+    isSubtitleMaskDragging = false;
+    document.body.classList.remove('subtitle-mask-dragging');
+    applySubtitleMaskState();
+}
+
+function initSubtitleMaskControls() {
+    if (!subtitleMaskBaseParent && subtitleMaskOverlay) {
+        subtitleMaskBaseParent = subtitleMaskOverlay.parentElement || videoWrapper;
+    }
+
+    updateSubtitleMaskButton();
+    scheduleSubtitleMaskSync();
+
+    if (subtitleMaskToggleBtn) {
+        subtitleMaskToggleBtn.addEventListener('click', function() {
+            isSubtitleMaskEnabled = !isSubtitleMaskEnabled;
+            if (isSubtitleMaskEnabled && subtitleMaskPercent <= 0) {
+                subtitleMaskPercent = DEFAULT_SUBTITLE_MASK_PERCENT;
+            }
+            if (!isSubtitleMaskEnabled) {
+                endSubtitleMaskDrag();
+                clearSubtitleMaskHandleTempState();
+            }
+            updateSubtitleMaskButton();
+            syncSubtitleMaskContainer();
+            if (isSubtitleMaskEnabled) {
+                showSubtitleMaskHandleTemporarily();
+            }
+            showStatus(
+                isSubtitleMaskEnabled ? '台词遮罩已开启：拖拽遮罩边缘可调整高度' : '台词遮罩已关闭',
+                'info',
+                2000,
+                true
+            );
+        });
+    }
+
+    if (subtitleMaskHandle) {
+        subtitleMaskHandle.addEventListener('mousedown', startSubtitleMaskDrag);
+        subtitleMaskHandle.addEventListener('touchstart', startSubtitleMaskDrag, { passive: false });
+    }
+
+    document.addEventListener('mousemove', moveSubtitleMaskDrag);
+    document.addEventListener('touchmove', moveSubtitleMaskDrag, { passive: false });
+    document.addEventListener('mouseup', endSubtitleMaskDrag);
+    document.addEventListener('touchend', endSubtitleMaskDrag);
+    document.addEventListener('touchcancel', endSubtitleMaskDrag);
+
+    window.addEventListener('resize', function() {
+        scheduleSubtitleMaskSync();
+    });
+    document.addEventListener('fullscreenchange', scheduleSubtitleMaskSync);
 }
 
 function clamp(value, min, max) {
@@ -2405,6 +2672,7 @@ function initTutorialModal() {
 function initPageEnhancements() {
     initTutorialModal();
     initResizableLayout();
+    initSubtitleMaskControls();
 }
 
 // 确保DOM加载完成后初始化

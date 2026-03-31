@@ -64,6 +64,11 @@
                         拼接截图
                     </button>
                 </div>
+                <div id="subtitleMaskOverlay" class="subtitle-mask-overlay">
+                    <button id="subtitleMaskHandle" class="subtitle-mask-handle" type="button" aria-label="Adjust mask height" title="Drag to resize mask">
+                        <span class="subtitle-mask-handle-bar"></span>
+                    </button>
+                </div>
             </div>
             
             <div class="controls">
@@ -101,6 +106,12 @@
                 <button id="singlePlayModeBtn" class="single-play-floating-btn" type="button" title="单句播放模式：关" aria-label="单句播放模式：关">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polygon points="6 4 20 12 6 20 6 4"></polygon>
+                    </svg>
+                </button>
+                <button id="subtitleMaskToggleBtn" class="subtitle-mask-toggle-btn" type="button" title="台词遮罩：关" aria-label="台词遮罩：关">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M2 12s3.5-5.5 10-5.5S22 12 22 12s-3.5 5.5-10 5.5S2 12 2 12z"></path>
+                        <path d="M4 20L20 4"></path>
                     </svg>
                 </button>
                 <button id="helpBtn" class="help-btn" title="使用教程">

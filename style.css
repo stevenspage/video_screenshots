@@ -198,6 +198,78 @@ body {
     display: flex;
 }
 
+.subtitle-mask-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 48px;
+    height: 10%;
+    display: none;
+    background: rgba(3, 8, 20, 1);
+    border-top: none;
+    z-index: 46;
+    pointer-events: none;
+    transition: height 0.12s ease;
+}
+
+.subtitle-mask-overlay.enabled {
+    display: block;
+    pointer-events: auto;
+}
+
+.subtitle-mask-overlay.dragging {
+    transition: none;
+}
+
+.subtitle-mask-handle {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.88);
+    width: 84px;
+    height: 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    background: rgba(15, 23, 42, 0.92);
+    color: rgba(255, 255, 255, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: ns-resize;
+    pointer-events: none;
+    padding: 0;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s, background 0.2s, border-color 0.2s;
+}
+
+.subtitle-mask-handle:hover {
+    background: rgba(30, 41, 59, 0.95);
+    border-color: rgba(255, 255, 255, 0.7);
+}
+
+.subtitle-mask-overlay.enabled:hover .subtitle-mask-handle,
+.subtitle-mask-overlay.dragging .subtitle-mask-handle,
+.subtitle-mask-overlay.show-handle-temp .subtitle-mask-handle,
+.subtitle-mask-handle:focus-visible {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    pointer-events: auto;
+}
+
+.subtitle-mask-handle-bar {
+    width: 32px;
+    height: 3px;
+    border-radius: 999px;
+    background: currentColor;
+    opacity: 0.9;
+}
+
+body.subtitle-mask-dragging,
+body.subtitle-mask-dragging * {
+    cursor: ns-resize !important;
+    user-select: none !important;
+}
+
 .capture-screenshot-btn {
     width: 36px;
     height: 36px;
@@ -382,6 +454,40 @@ body {
     border-color: #f97316;
     color: white;
     box-shadow: 0 4px 12px rgba(249, 115, 22, 0.35);
+}
+
+.subtitle-mask-toggle-btn {
+    position: absolute;
+    bottom: 64px;
+    right: 64px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #667eea;
+    z-index: 10;
+    transition: all 0.3s;
+}
+
+.subtitle-mask-toggle-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.subtitle-mask-toggle-btn.mode-on {
+    background: #111827;
+    border-color: #111827;
+    color: white;
+    box-shadow: 0 4px 12px rgba(17, 24, 39, 0.45);
 }
 
 .control-group {
@@ -1885,6 +1991,13 @@ body.layout-resizing * {
         height: 36px;
     }
 
+    .subtitle-mask-toggle-btn {
+        bottom: 56px;
+        right: 56px;
+        width: 36px;
+        height: 36px;
+    }
+
     .help-btn {
         bottom: 12px;
         right: 12px;
@@ -1942,6 +2055,13 @@ body.layout-resizing * {
         height: 36px;
         bottom: 54px;
         right: 10px;
+    }
+
+    .subtitle-mask-toggle-btn {
+        width: 36px;
+        height: 36px;
+        bottom: 54px;
+        right: 54px;
     }
 
     .help-btn {
