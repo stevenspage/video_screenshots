@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Vibo Player 美剧精听播放器：单句复读、字幕切换、遮罩训练、关键词搜索，以及辅助性的批量截图导出。">
+    <title>Vibo Player | 美剧精听播放器</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="landing.css?v=20260409">
+    <script>
+        document.documentElement.classList.add('js');
+    </script>
+</head>
+<body>
+    <header class="topbar">
+        <div class="shell topbar-inner">
+            <a class="brand" href="landing.html" aria-label="Vibo Player Landing Page">
+                <span class="brand-mark">VP</span>
+                <span class="brand-text">Vibo Player</span>
+            </a>
+            <nav class="topnav" aria-label="Landing navigation">
+                <a href="#features">精听亮点</a>
+                <a href="#workflow">学习流程</a>
+                <a href="#gallery">界面展示</a>
+                <a href="#faq">常见问题</a>
+            </nav>
+            <a class="btn btn-ghost btn-small" href="index.html">开始精听</a>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero section">
+            <div class="shell hero-grid">
+                <div class="hero-copy reveal">
+                    <p class="eyebrow">Vibo Player / 美剧精听播放器</p>
+                    <h1>把美剧片段，变成可以反复训练的精听材料</h1>
+                    <p class="lead">
+                        从加载视频与字幕，到单句复读、字幕切换、遮罩训练，再到搜索定位重点台词，
+                        Vibo Player 把美剧精听中最常反复操作的步骤整合到一个本地网页里。
+                        批量截图和长图导出保留为辅助能力，用来沉淀复习素材，而不是喧宾夺主。
+                    </p>
+                    <div class="hero-actions">
+                        <a class="btn btn-primary" href="index.html">开始精听训练</a>
+                        <a class="btn btn-soft" href="#gallery">先看学习界面</a>
+                    </div>
+                    <ul class="hero-notes">
+                        <li>单句复读与句级定位，专门服务反复听一句的精听过程</li>
+                        <li>双语、英文、中文、隐藏字幕切换，适合不同训练阶段</li>
+                        <li>截图导出放在后半程，用来整理重点台词与复习结果</li>
+                    </ul>
+                </div>
+                <div class="hero-media reveal">
+                    <div class="media-placeholder configurable-media" style="--ratio: 16 / 10;" data-image-key="hero" data-image-fit="cover" data-image-alt="Vib Player 美剧精听主界面">
+                        <div class="placeholder-copy">
+                            <span class="placeholder-tag">图片占位</span>
+                            <h3>精听主界面</h3>
+                            <p class="placeholder-size">建议尺寸：1600 x 1000 px</p>
+                            <p class="placeholder-tip">请上传播放器主界面截图，建议突出字幕区、精听控制按钮和搜索区域。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="trust section">
+            <div class="shell trust-grid">
+                <article class="trust-item reveal">
+                    <h3>单句复读</h3>
+                    <p>点击一句就能反复听这一句，减少手动拖动进度条的打断感。</p>
+                </article>
+                <article class="trust-item reveal">
+                    <h3>字幕控制</h3>
+                    <p>双语、单语、隐藏自由切换，适配“先听后看”与核对阶段。</p>
+                </article>
+                <article class="trust-item reveal">
+                    <h3>搜索定位</h3>
+                    <p>输入关键词就能回到目标台词，适合复盘固定表达和重点句型。</p>
+                </article>
+                <article class="trust-item reveal">
+                    <h3>本地隐私</h3>
+                    <p>视频、字幕和截图都在浏览器本地处理，不必上传素材到服务器。</p>
+                </article>
+            </div>
+        </section>
+
+        <section id="features" class="section">
+            <div class="shell">
+                <div class="section-head reveal">
+                    <p class="section-label">精听能力</p>
+                    <h2>一套围绕美剧精听而设计的训练型播放器</h2>
+                </div>
+                <div class="feature-grid">
+                    <article class="feature-card reveal">
+                        <p class="feature-kicker">01</p>
+                        <h3>单句复读与定位</h3>
+                        <p>同一句可反复播放，也能只定位不播放，方便听写、跟读和逐句核对。</p>
+                    </article>
+                    <article class="feature-card reveal">
+                        <p class="feature-kicker">02</p>
+                        <h3>字幕显示分层切换</h3>
+                        <p>支持双语、仅英文、仅中文和隐藏字幕，让同一份素材覆盖多个学习阶段。</p>
+                    </article>
+                    <article class="feature-card reveal">
+                        <p class="feature-kicker">03</p>
+                        <h3>字幕遮罩训练</h3>
+                        <p>可拖拽调整遮罩高度，练习先听再看，降低对字幕的即时依赖。</p>
+                    </article>
+                    <article class="feature-card reveal">
+                        <p class="feature-kicker">04</p>
+                        <h3>关键词搜索回捞</h3>
+                        <p>遇到重点表达或模糊记忆时，能快速搜索字幕并跳回原句继续练习。</p>
+                    </article>
+                    <article class="feature-card reveal">
+                        <p class="feature-kicker">05</p>
+                        <h3>本地播放更安心</h3>
+                        <p>加载本地视频和 SRT 字幕即可开始学习，数据不外传，适合长期自用。</p>
+                    </article>
+                    <article class="feature-card reveal">
+                        <p class="feature-kicker">06</p>
+                        <h3>截图沉淀复习素材</h3>
+                        <p>当你需要整理重点句时，再用批量截图和拼接导出，把学习成果存下来。</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section id="workflow" class="section section-soft">
+            <div class="shell">
+                <div class="section-head reveal">
+                    <p class="section-label">学习流程</p>
+                    <h2>从看剧到复习，形成一条完整的精听闭环</h2>
+                </div>
+                <ol class="flow-grid">
+                    <li class="flow-step reveal">
+                        <span class="step-num">01</span>
+                        <h3>加载视频和字幕</h3>
+                        <p>选择本地视频和 SRT 字幕，先把原始素材放进同一训练界面里。</p>
+                    </li>
+                    <li class="flow-step reveal">
+                        <span class="step-num">02</span>
+                        <h3>先听，再看字幕</h3>
+                        <p>用遮罩和字幕切换控制可见信息量，训练从听感中抓内容。</p>
+                    </li>
+                    <li class="flow-step reveal">
+                        <span class="step-num">03</span>
+                        <h3>单句复读与搜索</h3>
+                        <p>对重点句反复播放，配合关键词搜索回捞表达，强化理解和记忆。</p>
+                    </li>
+                    <li class="flow-step reveal">
+                        <span class="step-num">04</span>
+                        <h3>截图导出做复盘</h3>
+                        <p>把真正值得记住的句子批量整理成图，用在课后复习和资料归档。</p>
+                    </li>
+                </ol>
+            </div>
+        </section>
+
+        <section class="section section-deep">
+            <div class="shell deep-grid">
+                <div class="deep-copy reveal">
+                    <p class="section-label section-label-light">学习闭环</p>
+                    <h2>台词复读、遮蔽字幕、多台词截图导出</h2>
+                    <p>
+                        Vibo Player 的主线任务是帮助你把美剧片段变成可重复训练的精听材料。
+                        截图、拼接和长图导出只是后续整理动作，真正的核心是单句复读、字幕控制、
+                        搜索定位和本地稳定播放，让你把注意力留在听力训练本身。
+                    </p>
+                    <ul class="deep-list">
+                        <li>一刷：正常看剧看字幕</li>
+                        <li>二刷：对难句反复播放，直到听清连读、弱读和停顿</li>
+                        <li>三刷：遮蔽字幕</li>
+                        <li>把高价值句子导出成图，留到课后复习和长期积累</li>
+                    </ul>
+                    <a class="btn btn-primary" href="index.html">进入应用开始精听</a>
+                </div>
+                <div class="deep-media reveal">
+                    <div class="media-placeholder media-placeholder-dark configurable-media" style="--ratio: 16 / 9;" data-image-key="banner" data-image-fit="cover" data-image-alt="Vib Player 美剧精听学习封面图">
+                        <div class="placeholder-copy">
+                            <span class="placeholder-tag">图片占位</span>
+                            <h3>精听学习氛围图</h3>
+                            <p class="placeholder-size">建议尺寸：1600 x 900 px</p>
+                            <p class="placeholder-tip">可上传美剧封面、学习场景图或带字幕的氛围横幅，突出精听主题。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="gallery" class="section">
+            <div class="shell">
+                <div class="section-head reveal">
+                    <p class="section-label">界面展示</p>
+                    <h2>把精听界面、搜索细节和复习成果合并成一面 patchwall</h2>
+                </div>
+                <div class="patchwall-grid">
+                    <article class="patchwall-card patchwall-editor reveal">
+                        <div class="media-placeholder configurable-media" style="--ratio: 16 / 10;" data-image-key="editor" data-image-fit="cover" data-image-alt="Vib Player 精听操作界面">
+                            <div class="placeholder-copy">
+                                <span class="placeholder-tag">图片占位</span>
+                                <h3>精听操作界面</h3>
+                                <p class="placeholder-size">建议尺寸：1200 x 900 px</p>
+                                <p class="placeholder-tip">建议上传包含单句播放、字幕列表、搜索或遮罩控制的学习界面图。</p>
+                            </div>
+                        </div>
+                    </article>
+                    <article class="patchwall-card patchwall-detail reveal">
+                        <div class="media-placeholder configurable-media" style="--ratio: 16 / 11;" data-image-key="detail" data-image-fit="cover" data-image-alt="Vib Player 字幕切换与搜索细节图">
+                            <div class="placeholder-copy">
+                                <span class="placeholder-tag">图片占位</span>
+                                <h3>字幕切换与搜索细节</h3>
+                                <p class="placeholder-size">建议尺寸：1200 x 675 px</p>
+                                <p class="placeholder-tip">适合展示字幕模式切换、搜索定位或字幕遮罩等精听相关细节。</p>
+                            </div>
+                        </div>
+                    </article>
+                    <article class="patchwall-card patchwall-poster reveal">
+                        <div class="media-placeholder configurable-media" style="--ratio: 4 / 5;" data-image-key="subtitlePoster" data-image-fit="cover" data-image-alt="Vib Player 台词复习海报">
+                            <div class="placeholder-copy">
+                                <span class="placeholder-tag">图片占位</span>
+                                <h3>台词复习海报</h3>
+                                <p class="placeholder-size">建议尺寸：1440 x 1830 px</p>
+                                <p class="placeholder-tip">展示精听完成后整理出的重点台词海报，体现“截图为辅”的复盘用途。</p>
+                            </div>
+                        </div>
+                    </article>
+                    <article class="patchwall-card patchwall-storyboard reveal">
+                        <div class="media-placeholder configurable-media" style="--ratio: 16 / 11;" data-image-key="storyboard" data-image-fit="scale-down" data-image-alt="Vib Player 连续画面复习长图">
+                            <div class="placeholder-copy">
+                                <span class="placeholder-tag">图片占位</span>
+                                <h3>连续画面复习长图</h3>
+                                <p class="placeholder-size">建议尺寸：1440 x 3600 px 以上</p>
+                                <p class="placeholder-tip">在 patchwall 里作为结果图的一部分展示，不再单独放大成整行主角。</p>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section id="faq" class="section">
+            <div class="shell faq-wrap">
+                <div class="section-head reveal">
+                    <p class="section-label">常见问题</p>
+                    <h2>围绕美剧精听使用时，最常被问到的几个问题</h2>
+                </div>
+                <div class="faq-grid">
+                    <details class="faq-item reveal" open>
+                        <summary>这个工具更适合哪种学习场景？</summary>
+                        <p>最适合美剧、电影或短视频台词的逐句精听，尤其适合需要反复听同一句的训练方式。</p>
+                    </details>
+                    <details class="faq-item reveal">
+                        <summary>精听时可以不看字幕吗？</summary>
+                        <p>可以。你可以使用隐藏字幕、单语字幕和字幕遮罩，先听后看，再逐步核对。</p>
+                    </details>
+                    <details class="faq-item reveal">
+                        <summary>截图功能在这里扮演什么角色？</summary>
+                        <p>截图是辅助能力，适合把学完的重点句导出成复习资料，而不是取代精听过程本身。</p>
+                    </details>
+                    <details class="faq-item reveal">
+                        <summary>是否需要上传视频到服务器？</summary>
+                        <p>不需要。页面是纯前端处理，视频、字幕和截图都仅在本地浏览器中使用。</p>
+                    </details>
+                </div>
+
+                <section class="size-board reveal" aria-label="Image placeholder size list">
+                    <h3>可替换图片尺寸清单</h3>
+                    <ul>
+                        <li>精听主界面：1600 x 1000 px</li>
+                        <li>精听操作界面：1200 x 900 px</li>
+                        <li>字幕切换与搜索细节：1200 x 675 px</li>
+                        <li>台词复习海报：1440 x 1830 px</li>
+                        <li>连续画面复习长图：1440 x 3600 px 以上</li>
+                        <li>精听学习氛围图：1600 x 900 px</li>
+                    </ul>
+                </section>
+            </div>
+        </section>
+
+        <section class="section cta-section">
+            <div class="shell">
+                <div class="cta-box reveal">
+                    <p class="section-label">Start Listening</p>
+                    <h2>先把美剧精听这件事做顺手，截图整理自然会成为你的辅助动作</h2>
+                    <p>如果你需要的是一套围绕“听懂一句、记住一句、复习一句”展开的播放器，这个页面就是为你准备的。</p>
+                    <div class="hero-actions">
+                        <a class="btn btn-primary" href="index.html">开始精听训练</a>
+                        <a class="btn btn-soft" href="#gallery">查看学习界面</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="shell footer-inner">
+            <p>© <span id="year"></span> Vibo Player. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="landing.html">Landing</a>
+                <a href="index.html">App</a>
+                <a href="README.md">README</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="landing.js?v=20260408"></script>
+</body>
+</html>
