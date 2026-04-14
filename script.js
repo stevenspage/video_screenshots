@@ -32,6 +32,7 @@ const layoutResizer = document.getElementById('layoutResizer');
 let subtitles = [];
 let currentSubtitleIndex = -1;
 let manualSelectedSubtitleIndex = -1;
+let lastSearchSelectedSubtitleIndex = -1;
 let videoFile = null;
 let player = null;
 let lastCheckedIndex = -1; 
@@ -580,6 +581,27 @@ function setManualSelectedSubtitle(index) {
     manualSelectedSubtitleIndex = Number.isInteger(index) ? index : -1;
 }
 
+function scrollSubtitleIndexIntoView(index) {
+    if (!Number.isInteger(index) || index < 0) return;
+
+    const item = subtitleList.querySelector(`.subtitle-item[data-index="${index}"]`);
+    if (!item || item.style.display === 'none') return;
+
+    const listRect = subtitleList.getBoundingClientRect();
+    const itemRect = item.getBoundingClientRect();
+    const listHeight = subtitleList.clientHeight;
+    const currentScrollTop = subtitleList.scrollTop;
+    const itemHeight = itemRect.height;
+    const itemTopRelativeToList = itemRect.top - listRect.top + currentScrollTop;
+    const itemCenterRelativeToList = itemTopRelativeToList + (itemHeight / 2);
+    const targetScrollTop = itemCenterRelativeToList - (listHeight * 0.35);
+
+    subtitleList.scrollTo({
+        top: Math.max(0, targetScrollTop),
+        behavior: 'smooth'
+    });
+}
+
 function displaySubtitles() {
     subtitleList.innerHTML = '';
     subtitleCount.textContent = `${subtitles.length} 条字幕`;
@@ -588,6 +610,7 @@ function displaySubtitles() {
     }
     currentSubtitleIndex = -1;
     setManualSelectedSubtitle(-1);
+    lastSearchSelectedSubtitleIndex = -1;
 
     subtitles.forEach((subtitle, index) => {
         const item = document.createElement('div');
@@ -622,6 +645,9 @@ function displaySubtitles() {
         item.appendChild(contentDiv);
         
         contentDiv.addEventListener('click', function() {
+            if (subtitleSearchInput.value.trim()) {
+                lastSearchSelectedSubtitleIndex = index;
+            }
             setManualSelectedSubtitle(index);
             currentSubtitleIndex = index;
             updateSubtitleHighlight();
@@ -1823,6 +1849,7 @@ clearSearchBtn.addEventListener('click', function() {
     subtitleSearchInput.value = '';
     clearSearchBtn.style.display = 'none';
     filterSubtitles('');
+    scrollSubtitleIndexIntoView(lastSearchSelectedSubtitleIndex);
     subtitleSearchInput.focus();
 });
 
