@@ -67,6 +67,7 @@ const MIN_SUBTITLE_WIDTH = 280;
 const MIN_VIDEO_WIDTH = 420;
 const MIN_SUBTITLE_FONT_SCALE = 1;
 const MAX_SUBTITLE_FONT_SCALE = 1.35;
+const MANUAL_SUBTITLE_START_TOLERANCE = 0.05;
 const LAYOUT_STORAGE_KEY = 'vib-player-subtitle-width';
 const HOUSE_OF_CARDS_KEYWORD = 'houseofcards';
 const HOUSE_OF_CARDS_SUBTITLE_ROOT = 'subs';
@@ -565,12 +566,13 @@ function formatTime(seconds) {
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')},${String(ms).padStart(3, '0')}`;
 }
 
-function isTimeWithinSubtitle(currentTime, index) {
+function isTimeWithinSubtitle(currentTime, index, startTolerance = 0) {
     const subtitle = subtitles[index];
     if (!subtitle) return false;
 
+    const effectiveStartTime = Math.max(0, subtitle.startTime - Math.max(0, startTolerance));
     const isLastSubtitle = index === subtitles.length - 1;
-    return currentTime >= subtitle.startTime &&
+    return currentTime >= effectiveStartTime &&
         (currentTime < subtitle.endTime || (isLastSubtitle && currentTime <= subtitle.endTime));
 }
 
@@ -660,7 +662,8 @@ function updateCurrentSubtitle(currentTime) {
     let newIndex = -1;
 
     if (manualSelectedSubtitleIndex !== -1) {
-        if (isTimeWithinSubtitle(currentTime, manualSelectedSubtitleIndex)) {
+        // Keep a manually selected subtitle stable when seek lands slightly before its start.
+        if (isTimeWithinSubtitle(currentTime, manualSelectedSubtitleIndex, MANUAL_SUBTITLE_START_TOLERANCE)) {
             newIndex = manualSelectedSubtitleIndex;
         } else {
             setManualSelectedSubtitle(-1);
