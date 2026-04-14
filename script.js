@@ -31,6 +31,7 @@ const layoutResizer = document.getElementById('layoutResizer');
 
 let subtitles = [];
 let currentSubtitleIndex = -1;
+let manualSelectedSubtitleIndex = -1;
 let videoFile = null;
 let player = null;
 let lastCheckedIndex = -1; 
@@ -564,6 +565,19 @@ function formatTime(seconds) {
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')},${String(ms).padStart(3, '0')}`;
 }
 
+function isTimeWithinSubtitle(currentTime, index) {
+    const subtitle = subtitles[index];
+    if (!subtitle) return false;
+
+    const isLastSubtitle = index === subtitles.length - 1;
+    return currentTime >= subtitle.startTime &&
+        (currentTime < subtitle.endTime || (isLastSubtitle && currentTime <= subtitle.endTime));
+}
+
+function setManualSelectedSubtitle(index) {
+    manualSelectedSubtitleIndex = Number.isInteger(index) ? index : -1;
+}
+
 function displaySubtitles() {
     subtitleList.innerHTML = '';
     subtitleCount.textContent = `${subtitles.length} 条字幕`;
@@ -571,6 +585,7 @@ function displaySubtitles() {
         stopSingleLinePlay(false);
     }
     currentSubtitleIndex = -1;
+    setManualSelectedSubtitle(-1);
 
     subtitles.forEach((subtitle, index) => {
         const item = document.createElement('div');
@@ -605,6 +620,7 @@ function displaySubtitles() {
         item.appendChild(contentDiv);
         
         contentDiv.addEventListener('click', function() {
+            setManualSelectedSubtitle(index);
             currentSubtitleIndex = index;
             updateSubtitleHighlight();
 
@@ -641,16 +657,22 @@ function displaySubtitles() {
 }
 
 function updateCurrentSubtitle(currentTime) {
-    
     let newIndex = -1;
-    for (let i = 0; i < subtitles.length; i++) {
-        const isLastSubtitle = i === subtitles.length - 1;
-        const inRange = currentTime >= subtitles[i].startTime &&
-            (currentTime < subtitles[i].endTime || (isLastSubtitle && currentTime <= subtitles[i].endTime));
 
-        if (inRange) {
-            newIndex = i;
-            break;
+    if (manualSelectedSubtitleIndex !== -1) {
+        if (isTimeWithinSubtitle(currentTime, manualSelectedSubtitleIndex)) {
+            newIndex = manualSelectedSubtitleIndex;
+        } else {
+            setManualSelectedSubtitle(-1);
+        }
+    }
+
+    if (newIndex === -1) {
+        for (let i = 0; i < subtitles.length; i++) {
+            if (isTimeWithinSubtitle(currentTime, i)) {
+                newIndex = i;
+                break;
+            }
         }
     }
     
@@ -1333,6 +1355,9 @@ document.addEventListener('keydown', function(e) {
         e.preventDefault();
         const prevIndex = Math.max(0, currentSubtitleIndex - 1);
         if (subtitles[prevIndex]) {
+            setManualSelectedSubtitle(prevIndex);
+            currentSubtitleIndex = prevIndex;
+            updateSubtitleHighlight();
             player.currentTime(subtitles[prevIndex].startTime);
         }
     }
@@ -1341,6 +1366,9 @@ document.addEventListener('keydown', function(e) {
         e.preventDefault();
         const nextIndex = Math.min(subtitles.length - 1, currentSubtitleIndex + 1);
         if (subtitles[nextIndex]) {
+            setManualSelectedSubtitle(nextIndex);
+            currentSubtitleIndex = nextIndex;
+            updateSubtitleHighlight();
             player.currentTime(subtitles[nextIndex].startTime);
         }
     }
