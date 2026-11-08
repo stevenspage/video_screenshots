@@ -35,6 +35,7 @@ let manualSelectedSubtitleIndex = -1;
 let lastSearchSelectedSubtitleIndex = -1;
 let videoFile = null;
 let player = null;
+let cancelScreenshotSeek = null;
 let lastCheckedIndex = -1; 
 let isRepeating = false;
 let repeatInterval = null;
@@ -188,9 +189,9 @@ videoInput.addEventListener('change', function(e) {
             return;
         }
         
-        videoFile = file;
         loadVideo(file);
         videoFileName.textContent = file.name;
+        e.target.value = '';
     }
 });
 
@@ -199,6 +200,7 @@ subtitleInput.addEventListener('change', function(e) {
     if (file) {
         loadSubtitle(file);
         subtitleFileName.textContent = file.name;
+        e.target.value = '';
     }
 });
 
@@ -208,7 +210,9 @@ function loadVideo(file, options = {}) {
     if (!player) {
         initVideoPlayer();
     }
-    
+    const session = beginVideoSession(file, options);
+    videoFile = file;
+    videoFileName.textContent = file.name;
     if (isRepeating) {
         stopRepeatPlay();
     }
@@ -219,7 +223,9 @@ function loadVideo(file, options = {}) {
     manualScreenshots = [];
     updateManualScreenshotControls();
     
-    const url = URL.createObjectURL(file);
+    if (sessionObjectURL) URL.revokeObjectURL(sessionObjectURL);
+    const url = options.url || URL.createObjectURL(file);
+    sessionObjectURL = options.url ? null : url;
     const isMKV = file.name.toLowerCase().endsWith('.mkv');
     
     player.poster('');
@@ -238,6 +244,11 @@ function loadVideo(file, options = {}) {
     }
     
     player.one('error', function() {
+        if (session.generation !== sessionGeneration) return;
+        sessionMediaReady = false;
+        sessionRestoring = false;
+        pendingSession = activeSession;
+        sessionMessage('视频加载失败，请重新选择视频；播放记录仍保留。', Boolean(pendingSession?.handle));
         const error = player.error();
         console.error('视频加载错误:', error);
         
@@ -262,6 +273,7 @@ function loadVideo(file, options = {}) {
     });
     
     player.one('loadeddata', function() {
+        if (session.generation !== sessionGeneration) return;
         console.log('视频加载完成:', file.name);
         showStatus(`视频加载成功：${file.name}`, 'success');
         
@@ -273,8 +285,8 @@ function loadVideo(file, options = {}) {
         }
     });
     
-    if (!skipAutoSubtitle) {
-        void tryAutoLoadHouseOfCardsSubtitle(file);
+    if (!skipAutoSubtitle && !session.hasSubtitle) {
+        void tryAutoLoadHouseOfCardsSubtitle(file, session.generation, subtitleGeneration);
     }
 
     player.ready(function() {
@@ -339,7 +351,7 @@ async function fetchSubtitleFileFromPath(path) {
     return new File([subtitleBlob], fileName, { type: 'application/x-subrip' });
 }
 
-async function tryAutoLoadHouseOfCardsSubtitle(file) {
+async function tryAutoLoadHouseOfCardsSubtitle(file, generation = sessionGeneration, subtitleToken = subtitleGeneration) {
     if (!file || !file.name) return false;
 
     const normalizedName = normalizeAlphaNumeric(file.name);
@@ -352,8 +364,10 @@ async function tryAutoLoadHouseOfCardsSubtitle(file) {
     const candidates = buildHouseOfCardsSubtitleCandidates(season, episode);
 
     for (const candidatePath of candidates) {
+        if (generation !== sessionGeneration || subtitleToken !== subtitleGeneration) return false;
         try {
             const subtitleFile = await fetchSubtitleFileFromPath(candidatePath);
+            if (generation !== sessionGeneration || subtitleToken !== subtitleGeneration) return false;
             if (!subtitleFile) continue;
 
             loadSubtitle(subtitleFile);
@@ -364,6 +378,7 @@ async function tryAutoLoadHouseOfCardsSubtitle(file) {
         }
     }
 
+    if (generation !== sessionGeneration || subtitleToken !== subtitleGeneration) return false;
     const seasonTag = String(season).padStart(2, '0');
     const episodeTag = String(episode).padStart(2, '0');
     showStatus(`未找到匹配字幕：S${seasonTag}E${episodeTag}，请手动选择`, 'info', 2500, true);
@@ -371,24 +386,32 @@ async function tryAutoLoadHouseOfCardsSubtitle(file) {
 }
 
 function loadSubtitle(file) {
+    const generation = sessionGeneration;
+    const token = ++subtitleGeneration;
     const reader = new FileReader();
     
     reader.onload = function(e) {
+        if (generation !== sessionGeneration || token !== subtitleGeneration) return;
         const arrayBuffer = e.target.result;
         const uint8Array = new Uint8Array(arrayBuffer);
         
         let content = detectAndDecodeSubtitle(uint8Array);
         
-        subtitles = parseSRT(content);
+        const parsed = parseSRT(content);
         
-        if (subtitles.length > 0) {
+        if (parsed.length > 0) {
+            subtitles = parsed;
             displaySubtitles();
+            subtitleFileName.textContent = file.name;
+            rememberSessionSubtitle(file.name, content);
+            updateCurrentSubtitle(player ? player.currentTime() : 0);
         } else {
             showStatus('字幕文件格式错误或为空', 'error');
         }
     };
     
     reader.onerror = function() {
+        if (generation !== sessionGeneration || token !== subtitleGeneration) return;
         showStatus('字幕文件读取失败', 'error');
     };
     
@@ -1404,7 +1427,7 @@ document.addEventListener('keydown', function(e) {
 });
 
 videoPlaceholder.addEventListener('click', function() {
-    videoInput.click();
+    void chooseSessionVideo();
 });
 
 document.getElementById('closeMkvWarning').addEventListener('click', function() {
@@ -1800,6 +1823,12 @@ generateScreenshotsBtn.addEventListener('click', async function() {
         return;
     }
     
+    savePlaybackSession();
+    sessionCapture = true;
+    const captureGeneration = sessionGeneration;
+    const viewingTime = player.currentTime();
+    stopRepeatPlay();
+    stopSingleLinePlay();
     generateScreenshotsBtn.disabled = true;
     const originalText = generateScreenshotsBtn.innerHTML;
     generateScreenshotsBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg> 生成中...';
@@ -1809,18 +1838,24 @@ generateScreenshotsBtn.addEventListener('click', async function() {
         const selectedIndices = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
         selectedIndices.sort((a, b) => a - b); 
         
-        const screenshots = await captureScreenshots(selectedIndices);
-        
+        const screenshots = await captureScreenshots(selectedIndices, captureGeneration);
+        if (captureGeneration !== sessionGeneration) return;
         openScreenshotEditor(screenshots);
         
         showStatus(`成功生成 ${screenshots.length} 张截图`, 'success');
     } catch (error) {
+        if (captureGeneration !== sessionGeneration) return;
         console.error('生成截图失败:', error);
         showStatus('生成截图失败: ' + error.message, 'error');
         alert('生成截图失败，请查看控制台了解详情');
     } finally {
-        generateScreenshotsBtn.disabled = false;
+        if (captureGeneration === sessionGeneration) {
+            player.pause();
+            player.currentTime(viewingTime);
+            sessionCapture = false;
+        }
         generateScreenshotsBtn.innerHTML = originalText;
+        updateSelectedCount();
     }
 });
 
@@ -1921,11 +1956,12 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-async function captureScreenshots(indices) {
+async function captureScreenshots(indices, generation = sessionGeneration) {
     const screenshots = [];
     const video = player.el().querySelector('video');
     
     for (let i = 0; i < indices.length; i++) {
+        if (generation !== sessionGeneration) throw new Error('视频已切换，截图已取消');
         const index = indices[i];
         const subtitle = subtitles[index];
         
@@ -1933,9 +1969,10 @@ async function captureScreenshots(indices) {
         generateScreenshotsBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10"></circle></svg> ${percent}%`;
         
         await seekToTime(subtitle.startTime);
-        
-        player.play();
+        if (generation !== sessionGeneration) throw new Error('视频已切换，截图已取消');
+        await player.play();
         await new Promise(resolve => setTimeout(resolve, 400));
+        if (generation !== sessionGeneration) throw new Error('视频已切换，截图已取消');
         player.pause();
         
         const canvas = document.createElement('canvas');
@@ -1959,9 +1996,22 @@ async function captureScreenshots(indices) {
 }
 
 function seekToTime(time) {
-    return new Promise((resolve) => {
-        player.currentTime(time);
-        player.one('seeked', resolve);
+    if (!player.seeking() && Math.abs(player.currentTime() - time) < 0.01) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+        const cleanup = () => {
+            clearTimeout(timeout);
+            player.off('seeked', done);
+            player.off('error', failed);
+            if (cancelScreenshotSeek === cancel) cancelScreenshotSeek = null;
+        };
+        const done = () => { cleanup(); resolve(); };
+        const failed = () => { cleanup(); reject(new Error('无法定位截图时间')); };
+        const cancel = () => { cleanup(); reject(new Error('视频已切换，截图已取消')); };
+        const timeout = setTimeout(failed, 10000);
+        cancelScreenshotSeek = cancel;
+        player.one('seeked', done);
+        player.one('error', failed);
+        try { player.currentTime(time); } catch { failed(); }
     });
 }
 
@@ -2864,60 +2914,41 @@ async function generateStitchedImage() {
     return finalCanvas.toDataURL('image/png');
 }
 
-async function loadDemoFiles() {
+async function loadDemoFiles(restore = null) {
+    const generation = sessionGeneration;
+    const subtitleToken = subtitleGeneration;
     const demoVideoPath = 'playback_demo/House-of-Cards-Series-Trailer_with_subtitles.mp4';
     const demoSubtitlePath = 'playback_demo/House-of-Cards-Series-Trailer.srt';
-    const demoPosterPath = 'playback_demo/House-of-Cards-Series-Trailer-cover.jpg';
-    
     try {
-        const videoResponse = await fetch(demoVideoPath, { method: 'HEAD' });
-        if (!videoResponse.ok) {
+        const response = await fetch(demoVideoPath, { method: 'HEAD' });
+        if (generation !== sessionGeneration || subtitleToken !== subtitleGeneration) return;
+        if (!response.ok) {
+            if (restore) sessionMessage('演示视频暂时无法加载，请稍后恢复。', true);
             return;
         }
-        
-        const subtitleResponse = await fetch(demoSubtitlePath, { method: 'HEAD' });
-        if (!subtitleResponse.ok) {
-            return;
-        }
-        
-        if (!player) {
-            initVideoPlayer();
-        }
-        
-        player.poster(demoPosterPath);
-        player.src({
-            type: 'video/mp4',
-            src: demoVideoPath
-        });
-        
-        videoPlaceholder.classList.add('hidden');
-        videoFileName.textContent = 'House-of-Cards-Series-Trailer_with_subtitles.mp4';
-        
-        player.one('loadeddata', function() {
-            if (player.paused()) {
-                const overlay = document.getElementById('manualScreenshotOverlay');
-                if (overlay && player.readyState() >= 2) {
-                    overlay.classList.add('show');
-                }
-            }
-        });
-        
-        const subtitleBlob = await fetch(demoSubtitlePath).then(r => r.blob());
-        const subtitleFile = new File([subtitleBlob], 'House-of-Cards-Series-Trailer.srt', { type: 'text/plain' });
-        
-        loadSubtitle(subtitleFile);
-        subtitleFileName.textContent = subtitleFile.name;
+        const demoFile = { name: 'House-of-Cards-Series-Trailer_with_subtitles.mp4', size: 0, lastModified: 0, type: 'video/mp4' };
+        loadVideo(demoFile, { url: demoVideoPath, demo: true, restore });
+        const loadedGeneration = sessionGeneration;
+        const loadedSubtitleToken = subtitleGeneration;
+        player.poster('playback_demo/House-of-Cards-Series-Trailer-cover.jpg');
+        if (activeSession?.subtitle || subtitleToken + 1 !== loadedSubtitleToken) return;
+        const subtitleResponse = await fetch(demoSubtitlePath);
+        if (!subtitleResponse.ok) return;
+        const blob = await subtitleResponse.blob();
+        if (loadedGeneration !== sessionGeneration || loadedSubtitleToken !== subtitleGeneration) return;
+        loadSubtitle(new File([blob], 'House-of-Cards-Series-Trailer.srt', { type: 'text/plain' }));
     } catch (error) {
+        if (generation === sessionGeneration && restore) sessionMessage('演示视频暂时无法加载，请稍后恢复。', true);
     }
 }
 
 if (typeof videojs !== 'undefined') {
     initVideoPlayer();
-    setTimeout(loadDemoFiles, 300);
+    setTimeout(initializePlaybackSession, 0);
 } else {
     document.addEventListener('DOMContentLoaded', function() {
         initVideoPlayer();
-        setTimeout(loadDemoFiles, 300);
+        setTimeout(initializePlaybackSession, 0);
     });
 }
 

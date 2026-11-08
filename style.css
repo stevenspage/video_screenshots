@@ -2222,3 +2222,26 @@ body.layout-resizing * {
         font-size: 14px;
     }
 }
+.session-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding-right: 90px;
+    min-height: 80px;
+    color: #666;
+    font-size: 12px;
+}
+.session-controls span { flex: 1 1 200px; overflow-wrap: anywhere; }
+.session-controls button {
+    border: 1px solid #d7d7d7;
+    border-radius: 6px;
+    background: #fff;
+    color: #444;
+    padding: 6px 10px;
+    cursor: pointer;
+}
+.session-controls button:hover { background: #f3f3f3; }
+.session-controls button:focus-visible { outline: 2px solid #666; outline-offset: 2px; }
+.session-controls [hidden] { display: none; }

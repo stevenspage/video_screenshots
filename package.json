@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/playback-session.test.cjs",
+    "test:browser": "node tests/browser-session.cjs"
+  },
+  "devDependencies": {
+    "fake-indexeddb": "6.2.7",
+    "playwright": "1.65.0"
+  }
+}
