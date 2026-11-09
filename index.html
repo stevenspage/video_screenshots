@@ -72,6 +72,20 @@
                 </div>
             </div>
             
+            <section class="session-controls" aria-label="上次观看" aria-live="polite" hidden>
+                <div class="session-cover" aria-hidden="true"><img id="sessionThumbnail" alt="" hidden><span id="sessionThumbnailFallback">↺</span></div>
+                <div class="session-info">
+                    <span class="session-tag">上次观看</span>
+                    <strong id="sessionTitle"></strong>
+                    <div id="sessionPosition"></div>
+                    <p id="sessionMessage"></p>
+                </div>
+                <button id="restoreSession" type="button">恢复播放</button>
+                <details class="session-more">
+                    <summary aria-label="播放记录选项" title="播放记录选项">⋯</summary>
+                    <div class="session-menu"><button id="clearSession" type="button">清除播放记录</button></div>
+                </details>
+            </section>
             <div class="controls">
                 <div class="file-controls">
                     <div class="control-group">
@@ -103,11 +117,6 @@
                     </div>
                 </div>
 
-                <div class="session-controls" aria-live="polite" hidden>
-                    <span id="sessionMessage"></span>
-                    <button id="restoreSession" type="button" hidden>恢复上次播放</button>
-                    <button id="clearSession" type="button" hidden>清除播放记录</button>
-                </div>
                 <div id="subtitleStatus" class="subtitle-status"></div>
                 <button id="singlePlayModeBtn" class="single-play-floating-btn" type="button" title="单句播放模式：关" aria-label="单句播放模式：关">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

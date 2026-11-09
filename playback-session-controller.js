@@ -12,23 +12,41 @@ let sessionObjectURL = null;
 let sessionWarningShown = false;
 let sessionStarted = false;
 let sessionMetadataHandler = null;
+let sessionThumbnailSavedAt = 0;
+let sessionThumbnailTime = -1;
 
 function sessionMessage(message, canRestore = false) {
-    const text = message || '';
-    const canClear = Boolean(activeSession || pendingSession);
-    const messageEl = document.getElementById('sessionMessage');
-    messageEl.textContent = text;
-    messageEl.hidden = !text;
-    document.getElementById('restoreSession').hidden = !canRestore;
-    document.getElementById('clearSession').hidden = !canClear;
-    document.querySelector('.session-controls').hidden = !text && !canRestore && !canClear;
+    const card = document.querySelector('.session-controls');
+    const record = pendingSession;
+    card.hidden = !record;
+    if (!record) {
+        card.querySelector('details').open = false;
+        return;
+    }
+    const thumbnail = document.getElementById('sessionThumbnail');
+    const hasThumbnail = typeof record.thumbnail === 'string' && record.thumbnail.startsWith('data:image/jpeg;base64,');
+    thumbnail.hidden = !hasThumbnail;
+    document.getElementById('sessionThumbnailFallback').hidden = hasThumbnail;
+    if (hasThumbnail) thumbnail.src = record.thumbnail;
+    else thumbnail.removeAttribute('src');
+    document.getElementById('sessionTitle').textContent = record.video.name;
+    const seconds = Math.floor(PlaybackSession.normalizeState(record.state).time);
+    const time = [Math.floor(seconds / 3600), Math.floor(seconds / 60) % 60, seconds % 60]
+        .map(n => String(n).padStart(2, '0')).join(':');
+    document.getElementById('sessionPosition').textContent = `已看到 ${time} · ${record.subtitle ? '字幕与学习设置已保留' : '学习设置已保留'}`;
+    document.getElementById('sessionMessage').textContent = message || '';
+    const button = document.getElementById('restoreSession');
+    button.hidden = false;
+    button.disabled = sessionRestoring;
+    button.textContent = record.demo || record.handle ? '恢复播放' : '选择原视频恢复';
+    document.getElementById('clearSession').hidden = false;
 }
 
 function sessionStorageError(error) {
     console.warn('播放记录存储失败:', error);
     if (!sessionWarningShown) {
         sessionWarningShown = true;
-        sessionMessage('浏览器无法完整保存播放记录；当前播放不受影响。');
+        showStatus('浏览器无法完整保存播放记录；当前播放不受影响。', 'info', 4000, true);
     }
 }
 
@@ -51,8 +69,30 @@ function savePlaybackSession() {
     }
     if (!activeSession || !sessionMediaReady) return;
     activeSession.state = readPlaybackState();
+    captureSessionThumbnail();
     try { sessionStore.saveState(activeSession, activeSession.state); }
     catch (error) { sessionStorageError(error); }
+}
+
+function captureSessionThumbnail(force = false) {
+    if (!activeSession || !sessionStore || !sessionMediaReady || sessionRestoring || sessionCapture) return;
+    const video = player.el().querySelector('video');
+    if (!video || video.readyState < 2 || video.seeking || !video.videoWidth || !video.videoHeight) return;
+    if (activeSession.thumbnail && Math.abs(video.currentTime - sessionThumbnailTime) < 0.5) return;
+    if (!force && activeSession.thumbnail && Date.now() - sessionThumbnailSavedAt < 10000) return;
+    try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 240;
+        canvas.height = Math.max(1, Math.round(240 * video.videoHeight / video.videoWidth));
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        activeSession.thumbnail = canvas.toDataURL('image/jpeg', 0.7);
+        sessionThumbnailSavedAt = Date.now();
+        sessionThumbnailTime = video.currentTime;
+        persistSessionRecord();
+    } catch (error) {
+        // An unreadable frame must not interrupt playback or discard an existing preview.
+        console.warn('无法生成播放预览:', error);
+    }
 }
 
 function persistSessionRecord() {
@@ -108,12 +148,14 @@ function beginVideoSession(file, options) {
     ++subtitleGeneration;
     sessionRestoring = true;
     sessionMediaReady = false;
+    sessionThumbnailSavedAt = 0;
+    sessionThumbnailTime = -1;
     sessionCapture = false;
-    pendingSession = null;
+    pendingSession = restore;
     activeSession = {
         version: 1, id: restore?.id || `${Date.now()}-${Math.random().toString(36).slice(2)}`,
         video: PlaybackSession.identity(file), handle: options.handle || restore?.handle || null,
-        demo: options.demo === true, subtitle: restore?.subtitle || null, state
+        demo: options.demo === true, subtitle: restore?.subtitle || null, thumbnail: restore?.thumbnail || null, state
     };
     resetSessionSubtitles();
     if (activeSession.subtitle) {
@@ -133,9 +175,10 @@ function beginVideoSession(file, options) {
         player.currentTime(Number.isFinite(duration) ? Math.min(state.time, Math.max(0, duration)) : 0);
         sessionMediaReady = true;
         sessionRestoring = false;
+        pendingSession = null;
         restoreSubtitleSelection(activeSession.state);
         savePlaybackSession();
-        if (restore && !sessionWarningShown) sessionMessage('已恢复上次会话，点击播放继续。');
+        sessionMessage('');
     };
     player.one('loadedmetadata', sessionMetadataHandler);
     // Save intended state now, never the previous video's currentTime.
@@ -192,7 +235,8 @@ async function restorePlaybackSession(requestPermission = false) {
         return;
     }
     if (!record.handle || typeof record.handle.queryPermission !== 'function') {
-        sessionMessage(`请重新选择原视频「${record.video.name}」，将恢复字幕和播放进度。`);
+        sessionMessage('请选择原视频，载入后自动恢复进度。');
+        if (requestPermission) await chooseSessionVideo();
         return;
     }
     try {
@@ -233,7 +277,7 @@ async function clearPlaybackSession() {
         await sessionStore.clear();
         if (generation === sessionGeneration) sessionMessage('播放记录已清除；下次选择视频后重新记录。');
     } catch (error) {
-        if (generation === sessionGeneration) sessionMessage('播放记录未能完全清除，请在浏览器设置中清除此网站的数据。');
+        if (generation === sessionGeneration) showStatus('播放记录未能完全清除，请在浏览器设置中清除此网站的数据。', 'error', 5000, true);
     }
 }
 
@@ -247,6 +291,7 @@ async function initializePlaybackSession() {
     document.getElementById('restoreSession').addEventListener('click', () => void restorePlaybackSession(true));
     document.getElementById('clearSession').addEventListener('click', () => void clearPlaybackSession());
     ['pause', 'seeked', 'ratechange', 'volumechange', 'ended'].forEach(event => player.on(event, savePlaybackSession));
+    ['loadeddata', 'pause', 'seeked'].forEach(event => player.on(event, () => captureSessionThumbnail(true)));
     setInterval(savePlaybackSession, 2000);
     window.addEventListener('pagehide', savePlaybackSession);
     document.addEventListener('visibilitychange', () => { if (document.hidden) savePlaybackSession(); });
@@ -275,7 +320,7 @@ async function initializePlaybackSession() {
             restoreSubtitleSelection(record.state);
         }
         sessionRestoring = false;
-        await restorePlaybackSession();
+        sessionMessage('');
     } else {
         await loadDemoFiles();
     }

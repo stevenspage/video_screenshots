@@ -2223,26 +2223,38 @@ body.layout-resizing * {
     }
 }
 .session-controls {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    margin-top: 10px;
-    padding-right: 110px;
-    color: #666;
-    font-size: 12px;
-    line-height: 1.4;
+    display: flex; align-items: center; gap: 16px;
+    padding: 20px; background: #fff; border: 1px solid #e8e3f3;
+    border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,.06);
 }
-.session-controls[hidden] { display: none; }
-.session-controls span { flex: 1 1 200px; overflow-wrap: anywhere; }
-.session-controls button {
-    border: 1px solid #d7d7d7;
-    border-radius: 6px;
-    background: #fff;
-    color: #444;
-    padding: 6px 10px;
-    cursor: pointer;
+.session-controls[hidden], .session-controls [hidden] { display: none; }
+.session-cover { width: 72px; height: 72px; flex-shrink: 0; display: grid; place-items: center;
+    border-radius: 10px; background: linear-gradient(135deg,#eeebfc,#e1d9f4); color: #7962ba; font-size: 34px; }
+.session-info { flex: 1; min-width: 0; }
+.session-tag { display: block; color: #8a79a9; font-size: 11px; margin-bottom: 5px; }
+#sessionTitle { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; color: #363244; }
+#sessionPosition { color: #81798f; font-size: 12px; margin-top: 6px; }
+#sessionMessage { color: #9992a3; font-size: 12px; margin: 5px 0 0; line-height: 1.5; }
+#sessionMessage:empty { display: none; }
+#restoreSession { flex-shrink: 0; border: 0; border-radius: 8px; padding: 11px 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; cursor: pointer;
+    font: inherit; font-size: 13px; font-weight: 500; }
+#restoreSession:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+.session-more { position: relative; flex-shrink: 0; }
+.session-more summary { list-style: none; cursor: pointer; padding: 8px; color: #8e849d; font-size: 22px; }
+.session-more summary::-webkit-details-marker { display: none; }
+.session-menu { position: absolute; z-index: 30; right: 0; top: 100%; width: 148px; padding: 5px;
+    border-radius: 8px; border: 1px solid #eee9f5; background: white; box-shadow: 0 8px 24px #30204420; }
+#clearSession { width: 100%; padding: 10px; border: 0; background: transparent; color: #74667f; cursor: pointer; text-align: left; }
+#clearSession:hover { background: #f5f2fa; border-radius: 5px; }
+.session-controls button:focus-visible, .session-more summary:focus-visible { outline: 2px solid #8266c6; outline-offset: 3px; }
+@media(max-width:640px) {
+    .session-controls { gap: 12px; flex-wrap: wrap; padding: 16px; }
+    .session-cover { width: 52px; height: 58px; font-size: 28px; }
+    .session-info { flex-basis: calc(100% - 70px); }
+    #restoreSession { margin-left: 64px; flex: 1; }
 }
-.session-controls button:hover { background: #f3f3f3; }
-.session-controls button:focus-visible { outline: 2px solid #666; outline-offset: 2px; }
-.session-controls [hidden] { display: none; }
+
+.session-cover { position: relative; overflow: hidden; width: 104px; }
+.session-cover img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+@media(max-width:640px) { .session-cover { width: 52px; } }
