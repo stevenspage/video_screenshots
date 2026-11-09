@@ -2228,11 +2228,12 @@ body.layout-resizing * {
     align-items: center;
     gap: 8px;
     margin-top: 10px;
-    padding-right: 90px;
-    min-height: 80px;
+    padding-right: 110px;
     color: #666;
     font-size: 12px;
+    line-height: 1.4;
 }
+.session-controls[hidden] { display: none; }
 .session-controls span { flex: 1 1 200px; overflow-wrap: anywhere; }
 .session-controls button {
     border: 1px solid #d7d7d7;

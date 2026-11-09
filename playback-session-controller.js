@@ -14,9 +14,14 @@ let sessionStarted = false;
 let sessionMetadataHandler = null;
 
 function sessionMessage(message, canRestore = false) {
-    document.getElementById('sessionMessage').textContent = message;
+    const text = message || '';
+    const canClear = Boolean(activeSession || pendingSession);
+    const messageEl = document.getElementById('sessionMessage');
+    messageEl.textContent = text;
+    messageEl.hidden = !text;
     document.getElementById('restoreSession').hidden = !canRestore;
-    document.getElementById('clearSession').hidden = !(activeSession || pendingSession);
+    document.getElementById('clearSession').hidden = !canClear;
+    document.querySelector('.session-controls').hidden = !text && !canRestore && !canClear;
 }
 
 function sessionStorageError(error) {
